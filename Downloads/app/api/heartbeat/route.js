@@ -5,18 +5,29 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Method not allowed' });
-  }
+// CORS Preflight
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
 
-  const { license_key, device_id, session_token } = req.body;
-
-  if (!license_key || !device_id) {
-    return res.status(400).json({ success: false, error: 'Missing required fields' });
-  }
-
+export async function POST(req) {
   try {
+    const { license_key, device_id, session_token } = await req.json();
+
+    if (!license_key || !device_id) {
+      return new Response(JSON.stringify({ success: false, error: 'Missing required fields' }), {
+        status: 400,
+        headers: { 'Access-Control-Allow-Origin': '*' }
+      });
+    }
+
     // লাইসেন্স চেক
     const { data: license } = await supabase
       .from('licenses')
@@ -25,7 +36,10 @@ export default async function handler(req, res) {
       .single();
 
     if (!license) {
-      return res.status(401).json({ success: false, error: 'License not found' });
+      return new Response(JSON.stringify({ success: false, error: 'License not found' }), {
+        status: 401,
+        headers: { 'Access-Control-Allow-Origin': '*' }
+      });
     }
 
     // সেশন আপডেট করা
@@ -36,12 +50,18 @@ export default async function handler(req, res) {
         .eq('session_id', session_token);
     }
 
-    return res.status(200).json({
+    return new Response(JSON.stringify({
       success: true,
       message: 'Heartbeat received'
+    }), {
+      status: 200,
+      headers: { 'Access-Control-Allow-Origin': '*' }
     });
 
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    return new Response(JSON.stringify({ success: false, error: err.message }), {
+      status: 500,
+      headers: { 'Access-Control-Allow-Origin': '*' }
+    });
   }
 }

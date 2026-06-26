@@ -5,27 +5,41 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Method not allowed' });
-  }
+// CORS Preflight
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
 
-  const { license_key, device_id } = req.body;
-
-  if (!license_key || !device_id) {
-    return res.status(400).json({ success: false, error: 'Missing license_key or device_id' });
-  }
-
+export async function POST(req) {
   try {
-    // লাইসেন্স চেক করা
-    const { data: license, error } = await supabase
+    const { license_key, device_id } = await req.json();
+
+    if (!license_key || !device_id) {
+      return new Response(JSON.stringify({ success: false, error: 'Missing license_key or device_id' }), {
+        status: 400,
+        headers: { 'Access-Control-Allow-Origin': '*' }
+      });
+    }
+
+    // লাইসেন্স চেক
+    const { data: license } = await supabase
       .from('licenses')
       .select('*')
       .eq('license_key', license_key)
       .single();
 
-    if (error || !license) {
-      return res.status(401).json({ success: false, error: 'Invalid license' });
+    if (!license) {
+      return new Response(JSON.stringify({ success: false, error: 'Invalid license' }), {
+        status: 401,
+        headers: { 'Access-Control-Allow-Origin': '*' }
+      });
     }
 
     // নতুন সেশন তৈরি
@@ -38,13 +52,19 @@ export default async function handler(req, res) {
       created_at: new Date().toISOString()
     });
 
-    return res.status(200).json({
+    return new Response(JSON.stringify({
       success: true,
       session_id,
       message: 'Session started successfully'
+    }), {
+      status: 200,
+      headers: { 'Access-Control-Allow-Origin': '*' }
     });
 
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    return new Response(JSON.stringify({ success: false, error: err.message }), {
+      status: 500,
+      headers: { 'Access-Control-Allow-Origin': '*' }
+    });
   }
 }

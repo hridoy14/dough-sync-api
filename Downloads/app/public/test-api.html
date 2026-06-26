@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>API Test</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    button { padding: 10px 20px; margin: 10px; font-size: 16px; }
+    pre { background: #f4f4f4; padding: 15px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+  <h2>API Test - Dough SYNC</h2>
+
+  <button onclick="testSessionStart()">Test Session Start</button>
+  <button onclick="testHeartbeat()">Test Heartbeat</button>
+
+  <h3>Response:</h3>
+  <pre id="result">এখানে রেসপন্স দেখাবে...</pre>
+
+  <script>
+    async function testSessionStart() {
+      const res = await fetch("https://dough-sync-api-lovable.vercel.app/api/session-start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          license_key: "TEST-12345",
+          device_id: "device_98765"
+        })
+      });
+      const data = await res.json();
+      document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+    }
+
+    async function testHeartbeat() {
+      const res = await fetch("https://dough-sync-api-lovable.vercel.app/api/heartbeat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          license_key: "TEST-12345",
+          device_id: "device_98765",
+          session_token: "test-session-123"
+        })
+      });
+      const data = await res.json();
+      document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+    }
+  </script>
+
+</body>
+</html>
