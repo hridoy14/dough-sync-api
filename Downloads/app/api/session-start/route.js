@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -5,9 +6,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// CORS Preflight
 export async function OPTIONS() {
-  return new Response(null, {
+  return new NextResponse(null, {
     status: 204,
     headers: {
       'Access-Control-Allow-Origin': '*',
@@ -17,18 +17,17 @@ export async function OPTIONS() {
   });
 }
 
-export async function POST(req) {
+export async function POST(request) {
   try {
-    const { license_key, device_id } = await req.json();
+    const { license_key, device_id } = await request.json();
 
     if (!license_key || !device_id) {
-      return new Response(JSON.stringify({ success: false, error: 'Missing license_key or device_id' }), {
-        status: 400,
-        headers: { 'Access-Control-Allow-Origin': '*' }
-      });
+      return NextResponse.json(
+        { success: false, error: 'Missing license_key or device_id' },
+        { status: 400, headers: { 'Access-Control-Allow-Origin': '*' } }
+      );
     }
 
-    // লাইসেন্স চেক
     const { data: license } = await supabase
       .from('licenses')
       .select('*')
@@ -36,13 +35,12 @@ export async function POST(req) {
       .single();
 
     if (!license) {
-      return new Response(JSON.stringify({ success: false, error: 'Invalid license' }), {
-        status: 401,
-        headers: { 'Access-Control-Allow-Origin': '*' }
-      });
+      return NextResponse.json(
+        { success: false, error: 'Invalid license' },
+        { status: 401, headers: { 'Access-Control-Allow-Origin': '*' } }
+      );
     }
 
-    // নতুন সেশন তৈরি
     const session_id = crypto.randomUUID();
 
     await supabase.from('sessions').insert({
@@ -52,19 +50,15 @@ export async function POST(req) {
       created_at: new Date().toISOString()
     });
 
-    return new Response(JSON.stringify({
-      success: true,
-      session_id,
-      message: 'Session started successfully'
-    }), {
-      status: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' }
-    });
+    return NextResponse.json(
+      { success: true, session_id, message: 'Session started successfully' },
+      { status: 200, headers: { 'Access-Control-Allow-Origin': '*' } }
+    );
 
   } catch (err) {
-    return new Response(JSON.stringify({ success: false, error: err.message }), {
-      status: 500,
-      headers: { 'Access-Control-Allow-Origin': '*' }
-    });
+    return NextResponse.json(
+      { success: false, error: err.message },
+      { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } }
+    );
   }
 }
