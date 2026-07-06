@@ -20,7 +20,7 @@
 
   <script>
     async function testSessionStart() {
-      const res = await fetch("https://dough-sync-api-lovable.vercel.app/api/session-start", {
+      const res = await fetch("https://dough-sync-api.vercel.app/api/session-start",{
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -33,7 +33,7 @@
     }
 
     async function testHeartbeat() {
-      const res = await fetch("https://dough-sync-api-lovable.vercel.app/api/heartbeat", {
+      const res = await fetch("https://dough-sync-api.vercel.app/api/heartbeat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
