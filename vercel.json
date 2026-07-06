@@ -3,5 +3,6 @@
     "app/api/**/*.js": {
       "includeFiles": "**/*"
     }
-  }
+  },
+  "framework": "nextjs"
 }
