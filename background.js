@@ -1,8 +1,8 @@
 // 🤖 Dough SYNC v5.0.0 - Background Service Worker (Complete)
 
 const CONFIG = {
-  SUPABASE_URL: process.env.MY_SUPABASE_URL,
-  SUPABASE_KEY: process.env.MY_SERVICE_ROLE_KEY,
+  SUPABASE_URL:  "https://bcrzdgkyydfutrbcbbrt.supabase.co",
+  SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjcnpkZ2t5eWRmdXRyYmNiYnJ0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MjU3MjQ0NywiZXhwIjoyMDk4MTQ4NDQ3fQ.i5TMH90-qKETrhDRG_AYSLICWSQIq4QgSh2ymH-IOPA",
   LICENSE_API: 'https://bcrzdgkyydfutrbcbbrt.supabase.co/functions/v1/validate-license',
   SESSION_START_URL: 'https://bcrzdgkyydfutrbcbbrt.supabase.co/functions/v1/session-start',
   HEARTBEAT_URL: 'https://bcrzdgkyydfutrbcbbrt.supabase.co/functions/v1/heartbeat',
