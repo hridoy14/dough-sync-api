@@ -2,12 +2,12 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.MY_SUPABASE_URL,
-  process.env.MY_SERVICE_ROLE_KEY
-);
-
 export async function OPTIONS() {
+  const supabase = createClient(
+    process.env.MY_SUPABASE_URL,
+    process.env.MY_SERVICE_ROLE_KEY
+  );
+
   return new NextResponse(null, {
     status: 204,
     headers: {
@@ -19,6 +19,11 @@ export async function OPTIONS() {
 }
 
 export async function POST(request) {
+  const supabase = createClient(
+    process.env.MY_SUPABASE_URL,
+    process.env.MY_SERVICE_ROLE_KEY
+  );
+
   try {
     const { license_key, device_id, session_token } = await request.json();
 
