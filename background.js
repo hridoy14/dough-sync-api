@@ -50,13 +50,21 @@ setInterval(async () => {
     console.error("[Background] Heartbeat failed:", err);
   }
 }, 60000);
-
-// ==================== SIDEBAR MODE ====================
+/* 
+// ==================== SIDEBAR MODE (OLD - DISABLED)  ====================
 chrome.storage.local.get(["ql_sidebar_mode"], (result) => {
   const mode = result.ql_sidebar_mode || false;
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: mode }).catch(() => {});
-});
+}); 
+*/
 
+// ====================  SIDEBAR MODE (FIXED)  ====================
+chrome.storage.local.get(["ql_sidebar_mode"], (result) => {
+  const mode = result.ql_sidebar_mode || false;
+  if (chrome.sidePanel) {
+    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: mode }).catch(() => {});
+  }
+});
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === "local" && changes.ql_sidebar_mode) {
     const mode = changes.ql_sidebar_mode.newValue || false;
