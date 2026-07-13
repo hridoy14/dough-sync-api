@@ -823,7 +823,7 @@ function _buildFloatingUI() {
 
       if (settings.ql_license_key) {
         const startupHeartbeat = (attempt) => {
-          fetch(VALIDATE_URL, {
+         /* fetch(VALIDATE_URL,*/ fetch(HEARTBEAT_URL, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
