@@ -2099,6 +2099,22 @@ function requestLatestTokenFromHook(timeout = 1200) {
 // =============================================
 
 function loadChatHistory(callback) {
+  try {
+    chrome.storage.local.get([QL_HISTORY_KEY], settings => {
+      qlChatHistory = settings[QL_HISTORY_KEY] || [];
+      updateHistoryBadge();
+      if (callback) {
+        callback();
+      }
+    });
+  } catch (e) {
+    console.warn('[QL] Context invalidated — please reload page');
+    qlChatHistory = [];
+    if (callback) callback();
+  }
+}
+
+/*function loadChatHistory(callback) {
   chrome.storage.local.get([QL_HISTORY_KEY], settings => {
     qlChatHistory = settings[QL_HISTORY_KEY] || [];
     updateHistoryBadge();
@@ -2107,14 +2123,27 @@ function loadChatHistory(callback) {
     }
   });
 }
-
-function saveChatHistory() {
+*/
+/*function saveChatHistory() {
   if (qlChatHistory.length > QL_MAX_HISTORY) {
     qlChatHistory = qlChatHistory.slice(-QL_MAX_HISTORY);
   }
   chrome.storage.local.set({
     [QL_HISTORY_KEY]: qlChatHistory
   });
+}
+*/
+function saveChatHistory() {
+  if (qlChatHistory.length > QL_MAX_HISTORY) {
+    qlChatHistory = qlChatHistory.slice(-QL_MAX_HISTORY);
+  }
+  try {
+    chrome.storage.local.set({
+      [QL_HISTORY_KEY]: qlChatHistory
+    });
+  } catch (e) {
+    console.warn('[QL] Context invalidated, extension reload needed');
+  }
 }
 
 function addToChatHistory(text, status) {
