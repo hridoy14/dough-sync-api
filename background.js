@@ -89,7 +89,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   // activateSidebar
   if (msg.action === "activateSidebar") {
     chrome.storage.local.set({ ql_sidebar_mode: true });
-    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+   // chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+   if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) { chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {}); }
     if (sender.tab && sender.tab.id) {
       chrome.sidePanel.open({ tabId: sender.tab.id })
         .then(() => sendResponse({ ok: true }))
@@ -103,7 +104,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   // deactivateSidebar
   if (msg.action === "deactivateSidebar") {
     chrome.storage.local.set({ ql_sidebar_mode: false });
-    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
+    //chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
+    if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) { chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {}); }
     sendResponse({ ok: true });
     return false;
   }

@@ -2845,7 +2845,21 @@ function setupSend() {
       sendBtn.classList.add("ql-sending");
       sendBtn.disabled = true;
 
-      await sendNativeToLovable(finalMessage);
+      //await sendNativeToLovable(finalMessage);
+
+      
+     // First try WebSocket bypass (no credit charge)
+try {
+  const storageData = await new Promise(resolve => 
+    chrome.storage.local.get(["lovable_projectId"], resolve)
+  );
+  const lovable_projectId = storageData.lovable_projectId || null;
+  
+  await sendViaWs(finalMessage, lovable_projectId);
+} catch (wsError) {
+  // Fallback to DOM injection if WS fails
+  await sendNativeToLovable(finalMessage);
+}
 
       if (log) {
         log.className = "ql-log-success";
