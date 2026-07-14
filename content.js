@@ -844,13 +844,15 @@ function _buildFloatingUI() {
               qlLicenseStatus = data.status || qlLicenseStatus;
               qlSessionId = data.session_id || qlSessionId;
 
-              chrome.storage.local.set({
-                ql_user_name: qlUserName,
-                ql_expires_at: qlExpiresAt,
-                ql_activated_at: qlActivatedAt,
-                ql_license_status: qlLicenseStatus,
-                ql_session_id: qlSessionId
-              });
+              try {
+                  chrome.storage.local.set({
+                    ql_user_name: qlUserName,
+                    ql_expires_at: qlExpiresAt,
+                    ql_activated_at: qlActivatedAt,
+                    ql_license_status: qlLicenseStatus,
+                    ql_session_id: qlSessionId
+                  });
+                } catch (e) { console.warn('[QL] Context invalidated'); }
 
               activateBypass();
 
@@ -974,46 +976,50 @@ async function validateLicense() {
       qlLicenseStatus = data.status;
       qlOnlineCount = data.online_count || 0;
 
-      chrome.storage.local.set({
-        ql_license_valid: true,
-        ql_license_key: key,
-        ql_license_id: data.license_id || null,
-        ql_session_id: data.session_id,
-        ql_user_name: data.user_name || null,
-        ql_expires_at: data.expires_at || null,
-        ql_activated_at: data.activated_at || null,
-        ql_license_status: data.status || null
-      }, () => {
-        activateBypass();
-        if (log) {
-          log.className = "ql-log-success";
-          log.innerText = "✓ " + (data.message || "License validada");
-        }
-        try {
-          if (typeof QLSounds !== "undefined") {
-            QLSounds.activation();
+    try {
+        chrome.storage.local.set({
+          license_valid: true,
+          ql_license_key: key,
+          ql_license_id: data.license_id || null,
+          ql_session_id: data.session_id,
+          ql_user_name: data.user_name || null,
+          ql_expires_at: data.expires_at || null,
+          ql_activated_at: data.activated_at || null,
+          ql_license_status: data.status || null
+        }, () => {
+          activateBypass();
+          if (log) {
+            log.className = "ql-log-success";
+            log.innerText = "✓ " + (data.message || "License validada");
           }
-        } catch (error) {}
+          try {
+            if (typeof QLSounds !== "undefined") {
+              QLSounds.activation();
+            }
+          } catch (error) {}
 
-        setTimeout(() => {
-          const floating = document.getElementById("ql-floating");
-          if (floating) {
-            showMainUI(floating);
-          }
-          startHeartbeat(key);
-        }, 800);
-      });
+          setTimeout(() => {
+            const floating = document.getElementById("ql-floating");
+            if (floating) {
+              showMainUI(floating);
+            }
+            startHeartbeat(key);
+          }, 800);
+        });
+      } catch (e) { console.warn('[QL] Context invalidated'); }
+
     } else if (log) {
       log.className = "ql-log-error";
-      log.innerText = "✗ " + (data.message || data.error || "License inválida");
+      log.innerText = " " + (data.message || data.error || "License inválida");
     }
   } catch (error) {
     if (log) {
       log.className = "ql-log-error";
       log.innerText = "✗ Erro de conexão";
-    }
+ }
   }
 }
+
 
 // =============================================
 // MAIN UI
@@ -1074,11 +1080,15 @@ function showMainUI(container) {
         if (qlHeartbeatInterval) {
           clearInterval(qlHeartbeatInterval);
         }
+
+        /*
         chrome.storage.local.remove([
           "ql_license_valid", "ql_license_key", "ql_session_id",
           "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
         ], () => {
           deactivateBypass();
+         
+           
           qlUserName = null;
           qlExpiresAt = null;
           qlActivatedAt = null;
@@ -1090,7 +1100,27 @@ function showMainUI(container) {
     }
   }, 30);
 }
+ */
 
+  try {
+    chrome.storage.local.remove([
+      "ql_license_valid", "ql_license_key", "ql_session_id",
+      "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
+    ], () => {
+      deactivateBypass();
+    });
+  } catch (e) { console.warn('[QL] Context invalidated'); }
+
+  qlUserName = null;
+  qlExpiresAt = null;
+  qlActivatedAt = null;
+  qlLicenseStatus = null;
+  qlSessionId = null;
+  showLicenseGate(container);
+  });
+  }
+}, 30);
+}
 // =============================================
 // CUSTOM ALERT
 // =============================================
@@ -1331,10 +1361,11 @@ async function loadNotifications() {
     }
 
     const readIds = data.map(item => item.id);
-    chrome.storage.local.set({
-      ql_read_notifs: readIds
-    });
-
+   try {
+  chrome.storage.local.set({
+    ql_read_notifs: readIds
+  });
+} catch (e) { console.warn('[QL] Context invalidated'); }
     const badge = document.querySelector(".ql-notif-badge");
     if (badge) {
       badge.style.display = "none";
@@ -1520,11 +1551,19 @@ function setupMinimize() {
     qlMinimized = !qlMinimized;
     container.classList.toggle("ql-minimized", qlMinimized);
     btn.textContent = qlMinimized ? "□" : "−";
-
+    /*
     chrome.storage.local.set({
       ql_minimized: qlMinimized
     });
   });
+  */
+try {
+    chrome.storage.local.set({
+      ql_minimized: qlMinimized
+    });
+  } catch (e) { console.warn('[QL] Context invalidated'); }
+  });
+
 }
 
 // =============================================
@@ -1545,10 +1584,12 @@ function setupDarkMode() {
     }
 
     const isLight = container.classList.toggle("ql-light");
-    chrome.storage.local.set({
-      ql_dark_mode: !isLight
-    });
-  });
+    try {
+      chrome.storage.local.set({
+        ql_dark_mode: !isLight
+      });
+    } catch (e) { console.warn('[QL] Context invalidated'); }
+      });
 }
 
 // =============================================
@@ -1568,9 +1609,11 @@ function setupModoPlano() {
   });
 
   toggle.addEventListener("change", () => {
-    chrome.storage.local.set({
-      ql_modo_plano: toggle.checked
-    });
+    try {
+      chrome.storage.local.set({
+        ql_modo_plano: toggle.checked
+      });
+    } catch (e) { console.warn('[QL] Context invalidated'); }
     if (toggle.checked) {
       showModoPlanoAlert();
     }
@@ -1606,9 +1649,11 @@ function showModoPlanoAlert() {
     okBtn.addEventListener("click", () => {
       const dismiss = overlay.querySelector("#ql-modo-plano-dismiss");
       if (dismiss && dismiss.checked) {
+       try {
         chrome.storage.local.set({
           ql_modo_plano_alert_dismissed: true
         });
+      } catch (e) { console.warn('[QL] Context invalidated'); }
       }
       hide();
     });
@@ -1645,10 +1690,11 @@ function setupShield() {
 
   btn.addEventListener("click", () => {
     qlShieldActive = !qlShieldActive;
-    chrome.storage.local.set({
-      ql_shield_active: qlShieldActive
-    });
-
+        try {
+      chrome.storage.local.set({
+        ql_shield_active: qlShieldActive
+      });
+} catch (e) { console.warn('[QL] Context invalidated'); }
     const label = document.getElementById("ql-shield-label");
     if (qlShieldActive) {
       btn.classList.add("ql-shield-active");
@@ -1846,17 +1892,21 @@ function startHeartbeat(licenseKey) {
         qlActivatedAt = data.activated_at;
       }
 
-      chrome.storage.local.set({
-        ql_license_status: qlLicenseStatus,
-        ql_expires_at: qlExpiresAt,
-        ql_activated_at: qlActivatedAt
-      });
+      try {
+  chrome.storage.local.set({
+    ql_license_status: qlLicenseStatus,
+    ql_expires_at: qlExpiresAt,
+    ql_activated_at: qlActivatedAt
+  });
+} catch (e) { console.warn('[QL] Context invalidated'); }
 
       if (data.user_name) {
         qlUserName = data.user_name;
-        chrome.storage.local.set({
-          ql_user_name: qlUserName
-        });
+        try {
+  chrome.storage.local.set({
+    ql_user_name: qlUserName
+  });
+} catch (e) { console.warn('[QL] Context invalidated'); }
         const profileName = document.querySelector(".ql-profile-name");
         if (profileName) {
           profileName.textContent = data.user_name;
@@ -3061,9 +3111,11 @@ function setupResize() {
     isResizing = false;
     qlHeight = container.offsetHeight;
 
-    chrome.storage.local.set({
-      ql_height: qlHeight
-    });
+    try {
+  chrome.storage.local.set({
+    ql_height: qlHeight
+  });
+} catch (e) { console.warn('[QL] Context invalidated'); }
 
     try {
       resizeHandle.releasePointerCapture(event.pointerId);
@@ -3510,9 +3562,11 @@ let qlNativeChatCleanup = null;
 
 function activateNativeChat() {
   qlNativeChatActive = true;
+ try {
   chrome.storage.local.set({
     ql_native_chat: true
   });
+} catch (e) { console.warn('[QL] Context invalidated'); }
 
   const container = document.getElementById("ql-floating");
   if (container) {
@@ -3529,9 +3583,11 @@ function activateNativeChat() {
 
 function deactivateNativeChat() {
   qlNativeChatActive = false;
+try {
   chrome.storage.local.set({
     ql_native_chat: false
   });
+} catch (e) { console.warn('[QL] Context invalidated'); }
 
   if (qlNativeChatCleanup) {
     qlNativeChatCleanup();
@@ -3755,11 +3811,13 @@ window.addEventListener("message", event => {
     return;
   }
 
+  try {
   chrome.storage.local.set(updates, () => {
     updateSyncStatus();
     setTimeout(updateSyncStatus, 200);
     setTimeout(updateSyncStatus, 800);
   });
+} catch (e) { console.warn('[QL] Context invalidated'); }
 });
 
 // =============================================

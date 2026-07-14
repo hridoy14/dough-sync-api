@@ -418,12 +418,20 @@
 
                 // Standard message injection
                 if (parsed && typeof parsed.message === "string" && parsed.message.length > 0) {
-                  parsed.intent = "fix_error";
+                    // Keep DUPLICATE message, just add bypass metadata
+                  /*
+                  parsed.intent = "LOVEABLE PUSH";
                   parsed.message_intent_metadata = {
                     fix_error_metadata: {
                       errors: []
                     }
                   };
+                  data = JSON.stringify(parsed);
+                  */
+                 // Keep original message, just add bypass metadata
+                  parsed.intent = "build";
+                  parsed.model = null;
+                  parsed.contains_error = false;
                   data = JSON.stringify(parsed);
                   console.log("[MasterLovableHook] 💉 fix_error injetado (WS):", parsed.message.slice(0, 80));
 
