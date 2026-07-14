@@ -164,6 +164,7 @@ function templateMainUI(userName, statusBadge, isMinimized) {
     '</div>' +
     '<div id="ql-tab-content"></div>' +
     '<div class="ql-action-bar">' +
+    /*
     '<div class="ql-action-left">' +
     '<label class="ql-toggle">' +
     '<input type="checkbox" id="ql-modo-plano">' +
@@ -171,6 +172,7 @@ function templateMainUI(userName, statusBadge, isMinimized) {
     '</label>' +
     '<span class="ql-toggle-label-inline">' + t('mode.plano') + '</span>' +
     '</div>' +
+    */
     '<div class="ql-action-center">' +
     '<button id="ql-attach-btn" class="ql-attach-btn" title="Anexar arquivo (máx. 10)">📎</button>' +
     '<button id="ql-optimize-btn" class="ql-tool-btn" title="Otimizar com IA">' + SVG_ICONS.openai + '</button>' +
