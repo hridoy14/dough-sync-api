@@ -212,7 +212,7 @@
       });
 
       // Handle successful validation
-      if (validationResult && validationResult.valid) {
+              if (validationResult && (validationResult.valid || validationResult.success)) {
         chrome.storage.local.set({
           ql_license_valid: true,
           ql_license_key: licenseKey,
