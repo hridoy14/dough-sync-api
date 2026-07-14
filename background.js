@@ -68,7 +68,8 @@ chrome.storage.local.get(["ql_sidebar_mode"], (result) => {
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === "local" && changes.ql_sidebar_mode) {
     const mode = changes.ql_sidebar_mode.newValue || false;
-    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: mode }).catch(() => {});
+    //chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: mode }).catch(() => {});
+    if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) { chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: mode }).catch(() => {}); }
   }
 });
 
@@ -105,7 +106,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.action === "deactivateSidebar") {
     chrome.storage.local.set({ ql_sidebar_mode: false });
     //chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
-    if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) { chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {}); }
+    //if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) { chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {}); }
+   if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) { chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {}); }
     sendResponse({ ok: true });
     return false;
   }

@@ -2847,8 +2847,9 @@ function setupSend() {
 
       //await sendNativeToLovable(finalMessage);
 
-      
+
      // First try WebSocket bypass (no credit charge)
+     /* 
 try {
   const storageData = await new Promise(resolve => 
     chrome.storage.local.get(["lovable_projectId"], resolve)
@@ -2859,7 +2860,18 @@ try {
 } catch (wsError) {
   // Fallback to DOM injection if WS fails
   await sendNativeToLovable(finalMessage);
-}
+}*/
+
+// DOM injection — reliable, message will go
+await sendNativeToLovable(finalMessage);
+// WebSocket bypass in background — no credit charge
+try {
+  const storageData = await new Promise(resolve =>
+    chrome.storage.local.get(["lovable_projectId"], resolve)
+  );
+  const projectId = storageData.lovable_projectId || null;
+  sendViaWs(finalMessage, projectId).catch(() => {});
+} catch (e) {}
 
       if (log) {
         log.className = "ql-log-success";
