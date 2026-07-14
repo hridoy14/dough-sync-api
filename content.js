@@ -1602,11 +1602,13 @@ function setupModoPlano() {
     return;
   }
 
+ try {
   chrome.storage.local.get(["ql_modo_plano"], settings => {
     if (settings.ql_modo_plano === true) {
       toggle.checked = true;
     }
   });
+} catch (e) { console.warn('[QL] Context invalidated'); }
 
   toggle.addEventListener("change", () => {
     try {
@@ -2925,7 +2927,7 @@ try {
 
       if (log) {
         log.className = "ql-log-success";
-        log.innerText = hasAttachments ? "✓ Prompt enviado! imagem válida " : "✓ Prompt enviado!";
+        log.innerText = hasAttachments ? "✓ Prompt sent! with image" : "✓ Prompt sent!";
       }
 
       try {

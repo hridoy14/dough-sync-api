@@ -97,6 +97,15 @@ const i18n_strings = {
 'btn.ok': 'OK',
 'mode.plano': 'Plan Mode',
 'shortcuts.title': 'Quick Actions',
+'prompt.bugs.text': 'Fix all bugs and errors in this code',
+'prompt.refactor.text': 'Refactor this code for better performance',
+'prompt.errors.text': 'Find and fix all errors',
+'prompt.optimize.text': 'Optimize this code for better performance',
+'prompt.comments.text': 'Add detailed comments to this code',
+'prompt.seo.text': 'Improve SEO for this page',
+'prompt.test.text': 'Add unit tests for this code',
+'prompt.translate.text': 'Translate this to English',
+'prompt.review.text': 'Review this code for best practices',
   
 };
 
