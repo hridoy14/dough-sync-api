@@ -2,13 +2,14 @@
   "manifest_version": 3,
   "name": "dough-sync-api [TEST]",
   "version": "5.0.0",
-  "description": "TESTING ONLY - content.js + templates test",
+  "description": "TESTING ONLY - checking existing files",
   "permissions": [
     "storage",
     "activeTab",
     "scripting",
     "tabs",
-    "cookies"
+    "cookies",
+    "sidePanel"
   ],
   "host_permissions": [
     "https://*.lovable.dev/*",
@@ -27,59 +28,61 @@
       "128": "assets/icon128.png"
     }
   },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
   "background": {
     "service_worker": "background.js"
   },
-
   "content_scripts": [
-  {
-    "matches": [
-      "https://*.lovable.dev/*",
-      "https://lovable.dev/*"
-    ],
-    "js": [
-      "pageHook.js"
-    ],
-    "run_at": "document_start",
-    "world": "MAIN"
-  },
-  {
-    "matches": [
-      "https://*.lovable.dev/*",
-      "https://lovable.dev/*",
-      "https://api.lovable.dev/*"
-    ],
-    "js": [
-      "i18n.js",
-      "hwFingerprint.js",
-      "license-fix.js",
-      "content-templates.js",
-      "content.js"
-    ],
-    "css": [
-      "floating.css"
-    ],
-    "run_at": "document_idle"
-  }
-],
+    {
+      "matches": [
+        "https://*.lovable.dev/*",
+        "https://lovable.dev/*"
+      ],
+      "js": [
+        "pageHook.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://*.lovable.dev/*",
+        "https://lovable.dev/*",
+        "https://api.lovable.dev/*"
+      ],
+      "js": [
+        "hwFingerprint.js",
+        "i18n.js",
+        "content-templates.js",
+        "content.js",
+        "license-fix.js"
+      ],
+      "css": [
+        "floating.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
   "web_accessible_resources": [
-  {
-    "resources": [
-      "pageHook.js",
-      "license-fix.js",
-      "assets/logo-master-lovable.png",
-      "assets/logo-master-lovable-square.png",
-      "assets/icon16.png",
-      "assets/icon32.png",
-      "assets/icon48.png",
-      "assets/icon128.png"
-    ],
-    "matches": [
-      "https://*.lovable.dev/*",
-      "https://lovable.dev/*"
-    ]
-  }
-],
+    {
+      "resources": [
+        "pageHook.js",
+        "license-fix.js",
+        "assets/logo-master-lovable.png",
+        "assets/logo-master-lovable-square.png",
+        "assets/icon16.png",
+        "assets/icon32.png",
+        "assets/icon48.png",
+        "assets/icon128.png"
+      ],
+      "matches": [
+        "https://*.lovable.dev/*",
+        "https://lovable.dev/*"
+      ]
+    }
+  ],
   "icons": {
     "16": "assets/icon16.png",
     "32": "assets/icon32.png",
