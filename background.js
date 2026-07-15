@@ -128,6 +128,32 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.action === "proxyFetch") {
     (async () => {
       try {
+        const fetchOpts = {
+          method: msg.method || "POST",
+          headers: msg.headers || {}
+        };
+        // Only include body if it exists and is not null
+        if (msg.body) {
+          fetchOpts.body = msg.body;
+        }
+        const res = await fetch(msg.url, fetchOpts);
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch { data = { raw: text }; }
+        sendResponse({ ok: res.ok, status: res.status, data });
+      } catch (err) {
+        sendResponse({ ok: false, status: 0, data: { error: err.message } });
+      }
+    })();
+    return true;
+  }
+
+
+
+  /*
+  if (msg.action === "proxyFetch") {
+    (async () => {
+      try {
         const res = await fetch(msg.url, {
           method: msg.method || "POST",
           headers: msg.headers || {},
@@ -143,7 +169,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     })();
     return true;
   }
-
+*/
   // readCookies
   if (msg.action === "readCookies") {
     readLovableCookies(sendResponse);
