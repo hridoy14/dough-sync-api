@@ -89,6 +89,29 @@
   }
 
   // Extract project ID from any URL string
+
+  // Extract project ID from any URL string (supports both path and subdomain patterns)
+  function extractProjectIdFromString(url) {
+    try {
+      const str = String(url);
+      // Try path pattern first: /projects/{uuid}
+      let match = str.match(/projects\/([0-9a-fA-F-]{36})/i);
+      if (match) {
+        return match[1];
+      }
+      // Try subdomain pattern: {uuid}.lovableproject.com
+      match = str.match(/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/i);
+      if (match) {
+        return match[1];
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+
+  /*
   function extractProjectIdFromString(url) {
     try {
       const match = String(url).match(/projects\/([0-9a-fA-F-]{36})/i);
@@ -101,7 +124,7 @@
       return null;
     }
   }
-
+*/
   // =============================================
   // TOKEN CAPTURE & BROADCAST
   // =============================================

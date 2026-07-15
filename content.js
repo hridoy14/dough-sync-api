@@ -664,7 +664,7 @@ function decodeJwtUserId(token) {
 // =============================================
 // BACKGROUND FETCH (via bgFetch)
 // =============================================
-
+/*
 function bgFetch(url, options = {}) {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage({
@@ -696,6 +696,51 @@ function bgFetch(url, options = {}) {
     });
   });
 }
+*/
+
+function bgFetch(url, options = {}) {
+  return new Promise((resolve, reject) => {
+    try {
+      // Check extension context before sending message
+      if (!chrome.runtime || !chrome.runtime.id) {
+        console.warn("[bgFetch] Extension context invalidated — skipping fetch");
+        return reject(new Error("Extension context invalidated"));
+      }
+      chrome.runtime.sendMessage({
+        action: "proxyFetch",
+        url: url,
+        method: options.method || "POST",
+        headers: options.headers || {},
+        body: options.body || null
+      }, response => {
+        if (chrome.runtime.lastError) {
+          console.error("[bgFetch] runtime error:", chrome.runtime.lastError.message);
+          return reject(new Error(chrome.runtime.lastError.message));
+        }
+        if (!response) {
+          return reject(new Error("Sem resposta do background"));
+        }
+        if (response.data && typeof response.data === "object") {
+          if (!response.ok) {
+            const errorMsg = response.data.error || response.data.message || response.data.detail || JSON.stringify(response.data);
+            console.error("[bgFetch] HTTP " + response.status + " →", response.data);
+            return reject(new Error("HTTP " + response.status + ": " + errorMsg));
+          }
+          resolve(response.data);
+        } else if (!response.ok) {
+          reject(new Error("Fetch failed via background (status " + response.status + ")"));
+        } else {
+          resolve(response.data);
+        }
+      });
+    } catch (e) {
+      console.warn("[bgFetch] Context invalidated:", e);
+      reject(new Error("Extension context invalidated"));
+    }
+  });
+}
+
+
 
 // =============================================
 // GLOBAL STATE
@@ -861,6 +906,22 @@ function _buildFloatingUI() {
                 profileName.textContent = qlUserName || "User";
               }
               updateTrialCountdown();
+
+              } else if (data.reason === "device_conflict") {
+              if (attempt < 2) {
+                setTimeout(() => startupHeartbeat(attempt + 1), 5000);
+                return;
+              }
+              try {
+                chrome.storage.local.remove([
+                  "ql_license_valid", "ql_license_key", "ql_session_id",
+                  "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
+                ]);
+              } catch (e) {
+                console.warn("[QL] Context invalidated during startup heartbeat storage.remove");
+              }
+              deactivateBypass();
+              /*
             } else if (data.reason === "device_conflict") {
               if (attempt < 2) {
                 setTimeout(() => startupHeartbeat(attempt + 1), 5000);
@@ -871,6 +932,7 @@ function _buildFloatingUI() {
                 "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
               ]);
               deactivateBypass();
+              */
               const floating = document.getElementById("ql-floating");
               if (floating) {
                 showLicenseGate(floating);
@@ -1829,6 +1891,134 @@ function startHeartbeat(licenseKey) {
 
   qlHeartbeatInterval = setInterval(async () => {
     try {
+      // Check if extension context is still valid before making API calls
+      if (chrome.runtime && chrome.runtime.id) {
+        // Context is valid, proceed
+      } else {
+        // Extension context invalidated — stop heartbeat immediately
+        clearInterval(qlHeartbeatInterval);
+        qlHeartbeatInterval = null;
+        console.warn("[QL] Extension context invalidated — heartbeat stopped");
+        return;
+      }
+
+      const data = await bgFetch(HEARTBEAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          license_key: licenseKey,
+          session_id: qlSessionId,
+          session_token: qlSessionId,
+          heartbeat: true,
+          device_id: qlDeviceId
+        })
+      });
+
+      if (!data.valid && !data.success) {
+        const isConflict = data.reason === "device_conflict";
+        const isExpired = data.reason === "expired" || data.reason === "suspended" ||
+          (data.message && (data.message.includes("expirada") || data.message.includes("suspensa")));
+
+        if (isConflict) {
+          qlHbConflictCount++;
+          if (qlHbConflictCount < 2) {
+            return;
+          }
+        }
+
+        if (isConflict || isExpired) {
+          clearInterval(qlHeartbeatInterval);
+          qlHeartbeatInterval = null;
+          deactivateBypass();
+          try {
+            chrome.storage.local.remove([
+              "ql_license_valid", "ql_license_key", "ql_session_id",
+              "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
+            ]);
+          } catch (e) {
+            console.warn("[QL] Context invalidated during storage.remove");
+          }
+          const floating = document.getElementById("ql-floating");
+          if (floating) {
+            showLicenseGate(floating);
+          }
+          if (isConflict) {
+            setTimeout(() => showCustomAlert("Acesso Negado", data.message), 500);
+          }
+        }
+        return;
+      }
+
+      qlHbConflictCount = 0;
+      qlHbNetworkFailCount = 0;
+
+      qlOnlineCount = data.online_count || 0;
+      const onlineCountEl = document.getElementById("ql-online-count");
+      if (onlineCountEl) {
+        onlineCountEl.textContent = qlOnlineCount;
+      }
+
+      if (data.expires_at) {
+        qlExpiresAt = data.expires_at;
+      }
+      if (data.status) {
+        qlLicenseStatus = data.status;
+      }
+      if (data.activated_at) {
+        qlActivatedAt = data.activated_at;
+      }
+
+      try {
+        chrome.storage.local.set({
+          ql_license_status: qlLicenseStatus,
+          ql_expires_at: qlExpiresAt,
+          ql_activated_at: qlActivatedAt
+        });
+      } catch (e) {
+        console.warn("[QL] Context invalidated during heartbeat storage.set");
+      }
+
+      if (data.user_name) {
+        qlUserName = data.user_name;
+        try {
+          chrome.storage.local.set({
+            ql_user_name: qlUserName
+          });
+        } catch (e) {
+          console.warn("[QL] Context invalidated during heartbeat storage.set (user_name)");
+        }
+        const profileName = document.querySelector(".ql-profile-name");
+        if (profileName) {
+          profileName.textContent = data.user_name;
+        }
+      }
+    } catch (error) {
+      console.warn("[QL] Heartbeat error", error);
+      qlHbNetworkFailCount++;
+      if (qlHbNetworkFailCount >= 5) {
+        deactivateBypass();
+        qlHbNetworkFailCount = 0;
+      }
+    }
+  }, 60000);
+}
+
+
+
+/*
+function startHeartbeat(licenseKey) {
+  if (qlHeartbeatInterval) {
+    clearInterval(qlHeartbeatInterval);
+  }
+
+  qlHbConflictCount = 0;
+  qlHbNetworkFailCount = 0;
+
+  qlHeartbeatInterval = setInterval(async () => {
+    try {
       const data = await bgFetch(HEARTBEAT_URL, {
         method: "POST",
         headers: {
@@ -1924,7 +2114,7 @@ function startHeartbeat(licenseKey) {
     }
   }, 60000);
 }
-
+*/
 // =============================================
 // LICENSE EXPIRED HANDLER
 // =============================================
