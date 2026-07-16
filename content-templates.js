@@ -162,7 +162,10 @@ function templateMainUI(userName, statusBadge, isMinimized) {
     '<button class="ql-tab ql-tab-active" data-tab="prompt" data-i18n="tab.prompt">' + t('tab.prompt') + '</button>' +
     '<button class="ql-tab" data-tab="history" data-i18n="tab.history">' + t('tab.history') + '</button>' +
     '</div>' +
+     '<div id=\"ql-attach-preview\" class=\"ql-attach-preview\" style=\"display:none\"></div>' +
+    '<input type=\"file\" id=\"ql-file-input\" multiple style=\"display:none\" accept=\"image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/json,text/csv,application/zip,application/x-zip-compressed\">' +
     '<div id="ql-tab-content"></div>' +
+    
     '<div class="ql-action-bar">' +
     /*
     '<div class="ql-action-left">' +
