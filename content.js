@@ -2849,7 +2849,7 @@ async function uploadFileDirect(file, token) {
   const uuid = crypto.randomUUID();
   const mimeType = getMimeType(file);
   const filePath = generateFilePath(uuid, file);
-  const uploadUrl = SUPABASE_URL + "/storage/v1/object/prompt-images/" + filePath;
+  const uploadUrl = SUPABASE_URL + "/storage/v1/object/prompt-images/" + filePath 
    const uploadUrl = SUPABASE_URL + "/storage/v1/object/uploads/" + filePath;
 
   await new Promise(function (resolve, reject) {
