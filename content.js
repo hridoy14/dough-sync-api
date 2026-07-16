@@ -718,6 +718,7 @@ function bgFetch(url, options = {}) {
           console.error("[bgFetch] runtime error:", chrome.runtime.lastError.message);
           return reject(new Error(chrome.runtime.lastError.message));
         }
+        /*
         if (!response) {
           return reject(new Error("Sem resposta do background"));
         }
@@ -733,6 +734,27 @@ function bgFetch(url, options = {}) {
         } else {
           resolve(response.data);
         }
+        */
+        if (!response) {
+    return reject(new Error("No response from background"));
+  }
+  if (response.data && typeof response.data === "object") {
+    if (!response.ok) {
+      const errorMsg = response.data.error || response.data.message || response.data.detail || JSON.stringify(response.data);
+      console.warn("[bgFetch] HTTP " + response.status + " →", errorMsg);
+      return reject(new Error("HTTP " + response.status + ": " + errorMsg));
+    }
+    resolve(response.data);
+  } else if (response.status === 0) {
+    reject(new Error("Network error: " + (response.data ? response.data.error || response.data.message : "Unknown")));
+  } else if (!response.ok) {
+    reject(new Error("Fetch failed via background (status " + response.status + ")"));
+  } else {
+    resolve(response.data);
+  }
+
+
+
       });
     } catch (e) {
       console.warn("[bgFetch] Context invalidated:", e);

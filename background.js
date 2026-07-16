@@ -47,7 +47,7 @@ setInterval(async () => {
       })
     });
   } catch (err) {
-    console.error("[Background] Heartbeat failed:", err);
+    console.warn("[Background] Heartbeat failed:", err.message || err);
   }
 }, 60000);
 /* 
