@@ -63,8 +63,6 @@
   const SP_STORAGE_UPLOAD_URL = SP_SUPABASE_URL + "/storage/v1/object/prompt-images/";
   const SP_STORAGE_PUBLIC_URL = SP_SUPABASE_URL + "/storage/v1/object/public/uploads/";
   
- 
-
   // =============================================
   // CONSTANTS
   // =============================================
