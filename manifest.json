@@ -1,26 +1,27 @@
 {
   "manifest_version": 3,
-  "name": "dough-sync-api [TEST]",
-  "version": "5.0.0",
-  "description": "TESTING ONLY - checking existing files",
+  "name": "dough-sync-api",
+  "version": "5.00",
+  "description": "Powered by dough-sync-api",
   "permissions": [
     "storage",
     "activeTab",
     "scripting",
     "tabs",
-    "cookies",
-    "sidePanel"
+    "sidePanel",
+    "cookies"
   ],
   "host_permissions": [
     "https://*.lovable.dev/*",
     "https://api.lovable.dev/*",
     "https://lovable.dev/*",
+    "https://lovable-api.com/*",
     "https://bcrzdgkyydfutrbcbbrt.supabase.co/*",
     "https://dough-sync-api.vercel.app/*",
     "https://*.vercel.app/*"
   ],
   "action": {
-    "default_title": "dough-sync-api [TEST]",
+    "default_title": "dough-sync-api",
     "default_icon": {
       "16": "assets/icon16.png",
       "32": "assets/icon32.png",
@@ -53,7 +54,9 @@
         "https://api.lovable.dev/*"
       ],
       "js": [
+        "jszip.min.js",
         "hwFingerprint.js",
+        "sounds.js",
         "i18n.js",
         "content-templates.js",
         "content.js",
@@ -69,13 +72,16 @@
     {
       "resources": [
         "pageHook.js",
-        "license-fix.js",
+        "sounds/error-payment.mp3",
+        "sounds/error-ratelimit.mp3",
+        "sounds/error-token.mp3",
         "assets/logo-master-lovable.png",
         "assets/logo-master-lovable-square.png",
         "assets/icon16.png",
         "assets/icon32.png",
         "assets/icon48.png",
-        "assets/icon128.png"
+        "assets/icon128.png",
+        "license-fix.js"
       ],
       "matches": [
         "https://*.lovable.dev/*",
