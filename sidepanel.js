@@ -60,10 +60,9 @@
   const SP_USER_ROLES_URL = SP_SUPABASE_URL + "/rest/v1/user_roles?select=role";
   const SP_LICENSES_URL = SP_SUPABASE_URL + "/rest/v1/licenses";
   const SP_FEATURE_FLAGS_URL = SP_SUPABASE_URL + "/rest/v1/feature_flags";
-  //const SP_STORAGE_UPLOAD_URL = SP_SUPABASE_URL + "/storage/v1/object/prompt-images/";
- // const SP_STORAGE_PUBLIC_URL = SP_SUPABASE_URL + "/storage/v1/object/public/prompt-images/";
-  const SP_STORAGE_PUBLIC_URL = SP_SUPABASE_URL + "/storage/v1/object/prompt-images/";
+  const SP_STORAGE_UPLOAD_URL = SP_SUPABASE_URL + "/storage/v1/object/prompt-images/";
   const SP_STORAGE_PUBLIC_URL = SP_SUPABASE_URL + "/storage/v1/object/public/uploads/";
+  
  
 
   // =============================================
