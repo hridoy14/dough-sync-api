@@ -2875,7 +2875,8 @@ async function uploadFileDirect(file, token) {
     xhr.send(file);
   });
 
-  var publicUrl = SUPABASE_URL + "/storage/v1/object/public/prompt-images/" + filePath;
+  //var publicUrl = SUPABASE_URL + "/storage/v1/object/public/prompt-images/" + filePath;
+  var publicUrl = SUPABASE_URL + "/storage/v1/object/public/uploads/" + filePath;
   return {
     file_id: filePath,
     file_name: file.name || "file",
