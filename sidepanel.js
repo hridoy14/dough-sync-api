@@ -686,7 +686,7 @@
         "<span id=\"sp-native-chat-label\">" + t("btn.nativeChat") + "</span>" +
       "</button>" +
       "<button id=\"sp-download-project\" class=\"sp-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(37,99,235,0.08));border-color:rgba(59,130,246,0.3);color:#60a5fa;margin-top:6px\">" + t("btn.download") + "</button>" +
-      "<button id=\"sp-quick-init\" class=\"sp-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(250,204,21,0.12),rgba(234,179,8,0.08));border-color:rgba(250,204,21,0.35);color:#facc15;margin-top:6px\">Create New Project</button>" +
+      "<button id=\"spSetupWatermarkButton\" class=\"sp-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(250,204,21,0.12),rgba(234,179,8,0.08));border-color:rgba(250,204,21,0.35);color:#facc15;margin-top:6px\">Create New Project</button>" +
       "<div id=\"sp-download-status\" class=\"sp-log\" style=\"display:none\"></div>";
 
     // Render chips (quick actions)
@@ -2030,6 +2030,12 @@
   (async function spInitialize() {
     // Get device ID
     spDeviceId = await spGetDeviceId();
+
+     // Add this line:
+  spSetupWatermarkButton();
+  
+  // ... rest of initialization
+})();
 
     // Apply dark/light mode
     chrome.storage.local.get(["ql_dark_mode"], stored => {
