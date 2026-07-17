@@ -2033,10 +2033,8 @@
 
      // Add this line:
   spSetupWatermarkButton();
-  
-  // ... rest of initialization
-})();
 
+  
     // Apply dark/light mode
     chrome.storage.local.get(["ql_dark_mode"], stored => {
       if (stored.ql_dark_mode === false) {
