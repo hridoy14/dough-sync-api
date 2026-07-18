@@ -3143,30 +3143,31 @@ function setupSend() {
       sendBtn.classList.add("ql-sending");
       sendBtn.disabled = true;
 
-      //await sendNativeToLovable(finalMessage);
-
-
-  // First try WebSocket bypass (no credit charge)
-        // === SEND METHOD: DOM injection first, WS in background ===
+      
+           // === SEND METHOD: Try WebSocket FIRST (no credit), fallback to DOM ===
+      let wsSuccess = false;
+      
+      // Try WebSocket bypass first
       try {
-        await sendNativeToLovable(finalMessage);
-      } catch (domError) {
-        console.warn("[QL] DOM send failed:", domError.message);
-        // Try WebSocket as fallback
+        const sd = await new Promise(r => chrome.storage.local.get(["lovable_projectId"], r));
+        const projectId = sd.lovable_projectId || null;
+        await sendViaWs(finalMessage, projectId);
+        wsSuccess = true;
+        console.log("[QL] Sent via WebSocket (no credit)");
+      } catch (wsError) {
+        console.warn("[QL] WebSocket failed:", wsError.message);
+      }
+      
+      // If WebSocket failed, fallback to DOM injection
+      if (!wsSuccess) {
         try {
-          const sd = await new Promise(r => chrome.storage.local.get(["lovable_projectId"], r));
-          await sendViaWs(finalMessage, sd.lovable_projectId || null);
-        } catch (wsError) {
-          throw new Error("Both send methods failed: " + (domError.message || "DOM") + " / " + (wsError.message || "WS"));
+          await sendNativeToLovable(finalMessage);
+          console.log("[QL] Sent via DOM injection (credit charged)");
+        } catch (domError) {
+          throw new Error("Send failed: " + (domError.message || "unknown"));
         }
       }
 
-      // WebSocket bypass in BACKGROUND (fire-and-forget, no extra credit)
-      try {
-        const sd = await new Promise(r => chrome.storage.local.get(["lovable_projectId"], r));
-        sendViaWs(finalMessage, sd.lovable_projectId || null).catch(() => {});
-      } catch (e) {}
-      
       if (log) {
         log.className = "ql-log-success";
         log.innerText = hasAttachments ? "✓ Prompt sent! with image" : "✓ Prompt sent!";
