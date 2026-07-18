@@ -32,6 +32,7 @@ chrome.runtime.onStartup.addListener(async () => {
 });
 
 // ==================== HEARTBEAT ====================
+/*
 setInterval(async () => {
   try {
     const data = await chrome.storage.local.get(["ql_license_key", "device_id", "ql_session_id"]);
@@ -46,10 +47,56 @@ setInterval(async () => {
         session_token: data.ql_session_id
       })
     });
+    
   } catch (err) {
     console.warn("[Background] Heartbeat failed:", err.message || err);
   }
+},  60000);
+
+*/
+// =============================================
+// SECTION: HEARTBEAT
+// =============================================
+
+var hbInterval = setInterval(async () => {
+  try {
+    const data = await chrome.storage.local.get([
+      "ql_license_key",
+      "device_id",
+      "ql_session_id"
+    ]);
+
+    if (!data || !data.ql_license_key || !data.device_id) {
+      return;
+    }
+
+    // Check extension context before making API call
+    if (!chrome.runtime || !chrome.runtime.id) {
+      console.warn("[Background] Extension context invalidated — heartbeat stopped");
+      clearInterval(hbInterval);
+      return;
+    }
+
+    await fetch(CONFIG.HEARTBEAT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        license_key: data.ql_license_key,
+        device_id: data.device_id,
+        session_token: data.ql_session_id
+      })
+    });
+  } catch (err) {
+    if (err.message && err.message.includes("Extension context invalidated")) {
+      console.warn("[Background] Extension context invalidated — clearing heartbeat");
+      clearInterval(hbInterval);
+      return;
+    }
+    console.warn("[Background] Heartbeat warning:", err.message || err);
+  }
 }, 60000);
+
+  
 /* 
 // ==================== SIDEBAR MODE (OLD - DISABLED)  ====================
 chrome.storage.local.get(["ql_sidebar_mode"], (result) => {
