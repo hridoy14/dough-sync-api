@@ -44,11 +44,10 @@
 
   // Vercel API endpoints (your dough-sync-api)
   const SP_API_BASE = "https://dough-sync-api.vercel.app/api";
-  //const SP_VALIDATE_URL = SP_API_BASE + "/session-start";
-  //const SP_SESSION_START_URL = SP_API_BASE + "/session-start";
+  const SP_VALIDATE_URL = SP_API_BASE + "/session-start";
+  // const SP_SESSION_START_URL = SP_API_BASE + "/session-start";
   const SP_HEARTBEAT_URL = SP_API_BASE + "/heartbeat";
   const SP_SESSION_END_URL = SP_API_BASE + "/session-end";
-  const SP_VALIDATE_URL = SP_SUPABASE_URL + "/functions/v1/session-start";
 
   // Supabase Edge Functions
   const SP_OPTIMIZE_URL = SP_SUPABASE_URL + "/functions/v1/optimize-prompt";
@@ -61,7 +60,7 @@
   const SP_USER_ROLES_URL = SP_SUPABASE_URL + "/rest/v1/user_roles?select=role";
   const SP_LICENSES_URL = SP_SUPABASE_URL + "/rest/v1/licenses";
   const SP_FEATURE_FLAGS_URL = SP_SUPABASE_URL + "/rest/v1/feature_flags";
-  const SP_STORAGE_UPLOAD_URL = SP_SUPABASE_URL + "/storage/v1/object/prompt-images/";
+  const SP_STORAGE_UPLOAD_URL = SP_SUPABASE_URL + "/storage/v1/object/uploads/";
   const SP_STORAGE_PUBLIC_URL = SP_SUPABASE_URL + "/storage/v1/object/public/uploads/";
   
   // =============================================
@@ -114,7 +113,11 @@
           }
           if (!response) {
             return reject(new Error("No response"));
-          }
+          } 
+          if (typeof response === "string" && response.includes("<!DOCTYPE")) {
+        console.warn("[SP] HTML response from Vercel checkpoint");
+        return reject(new Error("Vercel security check — visit dough-sync-api.vercel.app"));
+      }
           if (response.data && typeof response.data === "object") {
             resolve(response.data);
           } else if (!response.ok) {
@@ -687,7 +690,7 @@
         "<span id=\"sp-native-chat-label\">" + t("btn.nativeChat") + "</span>" +
       "</button>" +
       "<button id=\"sp-download-project\" class=\"sp-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(37,99,235,0.08));border-color:rgba(59,130,246,0.3);color:#60a5fa;margin-top:6px\">" + t("btn.download") + "</button>" +
-      "<button id=\"spSetupWatermarkButton\" class=\"sp-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(250,204,21,0.12),rgba(234,179,8,0.08));border-color:rgba(250,204,21,0.35);color:#facc15;margin-top:6px\">Create New Project</button>" +
+      "<button id=\"sp-quick-init\" class=\"sp-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(250,204,21,0.12),rgba(234,179,8,0.08));border-color:rgba(250,204,21,0.35);color:#facc15;margin-top:6px\">Create New Project</button>" +
       "<div id=\"sp-download-status\" class=\"sp-log\" style=\"display:none\"></div>";
 
     // Render chips (quick actions)
