@@ -22,7 +22,7 @@ const PROXY_COMMAND_URL = SUPABASE_URL + "/functions/v1/proxy-command";
 const REMOVE_WATERMARK_URL = SUPABASE_URL + "/functions/v1/remove-watermark";
 const HEARTBEAT_URL = SUPABASE_URL + "/functions/v1/heartbeat";
 //const SESSION_START_URL = API_BASE_URL + "api/session-start";
-const HEARTBEAT_URL = API_BASE_URL + "api/heartbeat";
+// const HEARTBEAT_URL = API_BASE_URL + "api/heartbeat";
 
 const NOTIFICATIONS_URL = SUPABASE_URL + "/rest/v1/notifications?select=*&order=created_at.desc&limit=20";
 const VERSIONS_URL = SUPABASE_URL + "/rest/v1/extension_versions?select=version,changelog,file_path,is_alert_active&order=created_at.desc&limit=1&is_alert_active=eq.true";
