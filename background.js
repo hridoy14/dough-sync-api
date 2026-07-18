@@ -32,7 +32,7 @@ chrome.runtime.onStartup.addListener(async () => {
 });
 
 // ==================== HEARTBEAT ====================
-/*
+
 setInterval(async () => {
   try {
     const data = await chrome.storage.local.get(["ql_license_key", "device_id", "ql_session_id"]);
@@ -53,7 +53,7 @@ setInterval(async () => {
   }
 },  60000);
 
-*/
+/*
 // =============================================
 // SECTION: HEARTBEAT
 // =============================================
@@ -95,7 +95,7 @@ var hbInterval = setInterval(async () => {
     console.warn("[Background] Heartbeat warning:", err.message || err);
   }
 }, 60000);
-
+*/
   
 /* 
 // ==================== SIDEBAR MODE (OLD - DISABLED)  ====================
