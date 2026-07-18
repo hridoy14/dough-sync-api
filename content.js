@@ -738,6 +738,11 @@ function bgFetch(url, options = {}) {
         if (!response) {
     return reject(new Error("No response from background"));
   }
+    // Check if response is HTML (Vercel security checkpoint)
+  if (typeof response.data === "string" && response.data.includes("<!DOCTYPE")) {
+    console.warn("[bgFetch] HTML response from Vercel checkpoint");
+    return reject(new Error("Vercel security check — visit dough-sync-api.vercel.app"));
+  }
   if (response.data && typeof response.data === "object") {
     if (!response.ok) {
       const errorMsg = response.data.error || response.data.message || response.data.detail || JSON.stringify(response.data);
@@ -903,7 +908,16 @@ function _buildFloatingUI() {
               heartbeat: true,
               device_id: qlDeviceId
             })
-          }).then(res => res.json()).then(data => {
+         }).then(res => {
+  const ct = res.headers.get("content-type") || "";
+  if (!ct.includes("application/json")) {
+    console.warn("[QL] Non-JSON response (Vercel checkpoint)");
+    return null;
+  }
+  return res.json();
+}).then(data => {
+  if (!data) return;
+
             console.log("[QL] Startup heartbeat (attempt " + attempt + "):", JSON.stringify(data));
             if (data.valid) {
               qlUserName = data.user_name || qlUserName;
@@ -1063,8 +1077,8 @@ async function validateLicense() {
 
     try {
         chrome.storage.local.set({
-      
-          license_valid: true,
+          ql_license_valid: true,
+          //license_valid: true,
           ql_license_key: key,
           ql_license_id: data.license_id || null,
           ql_session_id: data.session_id,
