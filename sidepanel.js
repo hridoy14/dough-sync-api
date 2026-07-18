@@ -67,8 +67,8 @@
   // CONSTANTS
   // =============================================
 
-  const SP_MAX_FILES = 15;
-  const SP_MAX_FILE_SIZE = 20971520; // 20MB
+  const SP_MAX_FILES = 10;
+  const SP_MAX_FILE_SIZE = 52428800; // 20MB
   const SP_HISTORY_KEY = "ql_chat_history";
   const SP_MAX_HISTORY = 200;
   const SP_VERSION = "5.0.0";
