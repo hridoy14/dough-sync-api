@@ -1063,8 +1063,8 @@ async function validateLicense() {
 
     try {
         chrome.storage.local.set({
-          ql_license_valid: true,
-          //license_valid: true,
+      
+          license_valid: true,
           ql_license_key: key,
           ql_license_id: data.license_id || null,
           ql_session_id: data.session_id,
