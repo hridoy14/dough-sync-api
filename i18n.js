@@ -214,7 +214,7 @@ const TRANSLATIONS = {
     "btn.watermark": "Remove Watermark",
     "btn.shield.on": "Enable Shield",
     "btn.shield.off": "Disable Shield",
-    "btn.nativeChat": "Use Standard Chat",
+    "btn.nativeChat": "Use Native Chat",
     "btn.download": "Download Source Code",
     "btn.publish": "🌐 Publish Project",
     "btn.cloud": "☁️ Enable Lovable Cloud",
