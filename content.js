@@ -3146,42 +3146,27 @@ function setupSend() {
       //await sendNativeToLovable(finalMessage);
 
 
-     // First try WebSocket bypass (no credit charge)
-     /* 
-try {
-  const storageData = await new Promise(resolve => 
-    chrome.storage.local.get(["lovable_projectId"], resolve)
-  );
-  const lovable_projectId = storageData.lovable_projectId || null;
-  
-  await sendViaWs(finalMessage, lovable_projectId);
-} catch (wsError) {
-  // Fallback to DOM injection if WS fails
-  await sendNativeToLovable(finalMessage);
-}*/
-/*
-// DOM injection — reliable, message will go
-await sendNativeToLovable(finalMessage);
-// WebSocket bypass in background — no credit charge
-try {
-  const storageData = await new Promise(resolve =>
-    chrome.storage.local.get(["lovable_projectId"], resolve)
-  );
-  const projectId = storageData.lovable_projectId || null;
-  sendViaWs(finalMessage, projectId).catch(() => {});
-} catch (e) {}
-*/
   // First try WebSocket bypass (no credit charge)
-  try {
-    const storageData = await new Promise(resolve =>
-      chrome.storage.local.get(["lovable_projectId"], resolve)
-    );
-    const projectId = storageData.lovable_projectId || null;
-    await sendViaWs(finalMessage, projectId);
-  } catch (wsError) {
-    // Fallback to DOM injection if WS fails
-    await sendNativeToLovable(finalMessage);
-  }
+        // === SEND METHOD: DOM injection first, WS in background ===
+      try {
+        await sendNativeToLovable(finalMessage);
+      } catch (domError) {
+        console.warn("[QL] DOM send failed:", domError.message);
+        // Try WebSocket as fallback
+        try {
+          const sd = await new Promise(r => chrome.storage.local.get(["lovable_projectId"], r));
+          await sendViaWs(finalMessage, sd.lovable_projectId || null);
+        } catch (wsError) {
+          throw new Error("Both send methods failed: " + (domError.message || "DOM") + " / " + (wsError.message || "WS"));
+        }
+      }
+
+      // WebSocket bypass in BACKGROUND (fire-and-forget, no extra credit)
+      try {
+        const sd = await new Promise(r => chrome.storage.local.get(["lovable_projectId"], r));
+        sendViaWs(finalMessage, sd.lovable_projectId || null).catch(() => {});
+      } catch (e) {}
+      
       if (log) {
         log.className = "ql-log-success";
         log.innerText = hasAttachments ? "✓ Prompt sent! with image" : "✓ Prompt sent!";
