@@ -1063,7 +1063,16 @@ async function validateLicense() {
         device_id: qlDeviceId
       })
     });
-
+    // Check if response is HTML (Vercel security checkpoint)
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      console.warn("[QL] Vercel Security Checkpoint detected");
+      if (log) {
+        log.className = "ql-log-error";
+        log.innerText = "Vercel security check — please visit dough-sync-api.vercel.app in browser";
+      }
+      return;
+    }
     const data = await response.json();
 
     if (data.valid || data.success) {
