@@ -2558,10 +2558,10 @@ content.innerHTML += '<button id="ql-send" style="background:#6366f1;color:white
   setupFileAttachment();
   setupShield();
   setupNativeChatButton();
-  setupClipboardPaste();
+  setupClipboardPaste();*/
   setupDownloadProject();
 }
-*/
+
 function setupTabs() {
   const tabs = document.querySelectorAll(".ql-tab");
   tabs.forEach(tab => {
