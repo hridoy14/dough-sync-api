@@ -3496,7 +3496,7 @@ async function handleFilesAttach(files) {
       break;
     }
     if (file.size > MAX_FILE_SIZE) {
-      showCustomAlert("Too large", file.name + " exceeds 20MB.");
+      showCustomAlert("Too large", file.name + " exceeds 50MB.");
       continue;
     }
 
