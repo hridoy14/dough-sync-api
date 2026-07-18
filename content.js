@@ -2019,7 +2019,12 @@ function startHeartbeat(licenseKey) {
         }
       }
     } catch (error) {
-      console.warn("[QL] Heartbeat error", error);
+      if (error.message && error.message.includes("Extension context invalidated")) {
+        clearInterval(qlHeartbeatInterval);
+        return;
+      }
+      console.warn("[QL] Heartbeat warning:", error.message || error);
+      
       qlHbNetworkFailCount++;
       if (qlHbNetworkFailCount >= 5) {
         deactivateBypass();
