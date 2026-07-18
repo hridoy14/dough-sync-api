@@ -3159,7 +3159,7 @@ try {
   // Fallback to DOM injection if WS fails
   await sendNativeToLovable(finalMessage);
 }*/
-
+/*
 // DOM injection — reliable, message will go
 await sendNativeToLovable(finalMessage);
 // WebSocket bypass in background — no credit charge
@@ -3170,7 +3170,18 @@ try {
   const projectId = storageData.lovable_projectId || null;
   sendViaWs(finalMessage, projectId).catch(() => {});
 } catch (e) {}
-
+*/
+  // First try WebSocket bypass (no credit charge)
+  try {
+    const storageData = await new Promise(resolve =>
+      chrome.storage.local.get(["lovable_projectId"], resolve)
+    );
+    const projectId = storageData.lovable_projectId || null;
+    await sendViaWs(finalMessage, projectId);
+  } catch (wsError) {
+    // Fallback to DOM injection if WS fails
+    await sendNativeToLovable(finalMessage);
+  }
       if (log) {
         log.className = "ql-log-success";
         log.innerText = hasAttachments ? "✓ Prompt sent! with image" : "✓ Prompt sent!";
