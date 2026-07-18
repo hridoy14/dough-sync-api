@@ -109,11 +109,18 @@ function shouldHookWS(url) {
 }
 
 const OriginalWS = window.WebSocket;
+let _lovableActiveWs = null;   //new
 class HookedWebSocket extends OriginalWS {
   constructor(url, protocols) {
     super(url, protocols);
     this._url = url;
-    this.addEventListener("open", () => console.log("[WS-Hook] Connected:", url));
+        this.addEventListener("open", () => {
+      console.log("[WS-Hook] Connected:", url);
+      _lovableActiveWs = this;
+    });
+    this.addEventListener("close", () => {
+      if (_lovableActiveWs === this) _lovableActiveWs = null;
+    });
     this.addEventListener("message", async (event) => {
       try {
         const data = await parseWebSocketMessage(event.data);
