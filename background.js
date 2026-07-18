@@ -30,7 +30,7 @@ chrome.runtime.onStartup.addListener(async () => {
     console.error("[Background] Session start failed:", err);
   }
 });
-
+/*
 // ==================== HEARTBEAT ====================
 
 setInterval(async () => {
@@ -53,7 +53,7 @@ setInterval(async () => {
   }
 },  60000);
 
-/*
+*/
 // =============================================
 // SECTION: HEARTBEAT
 // =============================================
@@ -95,7 +95,7 @@ var hbInterval = setInterval(async () => {
     console.warn("[Background] Heartbeat warning:", err.message || err);
   }
 }, 60000);
-*/
+
   
 /* 
 // ==================== SIDEBAR MODE (OLD - DISABLED)  ====================
