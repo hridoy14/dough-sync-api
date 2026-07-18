@@ -2800,7 +2800,7 @@ async function quickProjectInit() {
 // =============================================
 
 const MAX_FILES = 10;
-const MAX_FILE_SIZE = 20971520;
+const MAX_FILE_SIZE = 52428800;
 let qlAttachedFiles = [];
 
 function formatFileSize(bytes) {
