@@ -15,14 +15,13 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const API_BASE_URL = "https://dough-sync-api.vercel.app/";
 
 //const VALIDATE_URL = SUPABASE_URL + "/functions/v1/validate-license";
-// const VALIDATE_URL = API_BASE_URL + "api/session-start";
-const VALIDATE_URL = SUPABASE_URL + "/functions/v1/validate-license";
+const VALIDATE_URL = API_BASE_URL + "api/session-start";
 const OPTIMIZE_URL = SUPABASE_URL + "/functions/v1/optimize-prompt";
 const PROXY_COMMAND_URL = SUPABASE_URL + "/functions/v1/proxy-command";
 const REMOVE_WATERMARK_URL = SUPABASE_URL + "/functions/v1/remove-watermark";
-const HEARTBEAT_URL = SUPABASE_URL + "/functions/v1/heartbeat";
-//const SESSION_START_URL = API_BASE_URL + "api/session-start";
-// const HEARTBEAT_URL = API_BASE_URL + "api/heartbeat";
+
+const SESSION_START_URL = API_BASE_URL + "api/session-start";
+const HEARTBEAT_URL = API_BASE_URL + "api/heartbeat";
 
 const NOTIFICATIONS_URL = SUPABASE_URL + "/rest/v1/notifications?select=*&order=created_at.desc&limit=20";
 const VERSIONS_URL = SUPABASE_URL + "/rest/v1/extension_versions?select=version,changelog,file_path,is_alert_active&order=created_at.desc&limit=1&is_alert_active=eq.true";
@@ -739,11 +738,6 @@ function bgFetch(url, options = {}) {
         if (!response) {
     return reject(new Error("No response from background"));
   }
-    // Check if response is HTML (Vercel security checkpoint)
-  if (typeof response.data === "string" && response.data.includes("<!DOCTYPE")) {
-    console.warn("[bgFetch] HTML response from Vercel checkpoint");
-    return reject(new Error("Vercel security check — visit dough-sync-api.vercel.app"));
-  }
   if (response.data && typeof response.data === "object") {
     if (!response.ok) {
       const errorMsg = response.data.error || response.data.message || response.data.detail || JSON.stringify(response.data);
@@ -909,16 +903,7 @@ function _buildFloatingUI() {
               heartbeat: true,
               device_id: qlDeviceId
             })
-         }).then(res => {
-  const ct = res.headers.get("content-type") || "";
-  if (!ct.includes("application/json")) {
-    console.warn("[QL] Non-JSON response (Vercel checkpoint)");
-    return null;
-  }
-  return res.json();
-}).then(data => {
-  if (!data) return;
-
+          }).then(res => res.json()).then(data => {
             console.log("[QL] Startup heartbeat (attempt " + attempt + "):", JSON.stringify(data));
             if (data.valid) {
               qlUserName = data.user_name || qlUserName;
@@ -1064,16 +1049,7 @@ async function validateLicense() {
         device_id: qlDeviceId
       })
     });
-    // Check if response is HTML (Vercel security checkpoint)
-    const contentType = response.headers.get("content-type") || "";
-    if (!contentType.includes("application/json")) {
-      console.warn("[QL] Vercel Security Checkpoint detected");
-      if (log) {
-        log.className = "ql-log-error";
-        log.innerText = "Vercel security check — please visit dough-sync-api.vercel.app in browser";
-      }
-      return;
-    }
+
     const data = await response.json();
 
     if (data.valid || data.success) {
@@ -1087,8 +1063,7 @@ async function validateLicense() {
 
     try {
         chrome.storage.local.set({
-          ql_license_valid: true,
-          //license_valid: true,
+          license_valid: true,
           ql_license_key: key,
           ql_license_id: data.license_id || null,
           ql_session_id: data.session_id,
@@ -2044,11 +2019,7 @@ function startHeartbeat(licenseKey) {
         }
       }
     } catch (error) {
-      if (error.message && error.message.includes("Extension context invalidated")) {
-        clearInterval(qlHeartbeatInterval);
-        return;
-      }
-      console.warn("[QL] Heartbeat warning:", error.message || error);
+      console.warn("[QL] Heartbeat error", error);
       qlHbNetworkFailCount++;
       if (qlHbNetworkFailCount >= 5) {
         deactivateBypass();
@@ -2549,7 +2520,6 @@ function renderPromptView() {
 // Add Send button
 content.innerHTML += '<button id="ql-send" style="background:#6366f1;color:white;border:none;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-top:12px;width:100%">Send</button>';
   setupSend();
-  /*
   setupSuggestionChips();
   setupWatermarkButton();
   setupOptimize();
@@ -2560,7 +2530,6 @@ content.innerHTML += '<button id="ql-send" style="background:#6366f1;color:white
   setupNativeChatButton();
   setupClipboardPaste();
   setupDownloadProject();
-  */
 }
 
 function setupTabs() {
@@ -2802,7 +2771,7 @@ async function quickProjectInit() {
 // =============================================
 
 const MAX_FILES = 10;
-const MAX_FILE_SIZE = 52428800;
+const MAX_FILE_SIZE = 20971520;
 let qlAttachedFiles = [];
 
 function formatFileSize(bytes) {
@@ -3145,30 +3114,33 @@ function setupSend() {
       sendBtn.classList.add("ql-sending");
       sendBtn.disabled = true;
 
-      
-           // === SEND METHOD: Try WebSocket FIRST (no credit), fallback to DOM ===
-      let wsSuccess = false;
-      
-      // Try WebSocket bypass first
-      try {
-        const sd = await new Promise(r => chrome.storage.local.get(["lovable_projectId"], r));
-        const projectId = sd.lovable_projectId || null;
-        await sendViaWs(finalMessage, projectId);
-        wsSuccess = true;
-        console.log("[QL] Sent via WebSocket (no credit)");
-      } catch (wsError) {
-        console.warn("[QL] WebSocket failed:", wsError.message);
-      }
-      
-      // If WebSocket failed, fallback to DOM injection
-      if (!wsSuccess) {
-        try {
-          await sendNativeToLovable(finalMessage);
-          console.log("[QL] Sent via DOM injection (credit charged)");
-        } catch (domError) {
-          throw new Error("Send failed: " + (domError.message || "unknown"));
-        }
-      }
+      //await sendNativeToLovable(finalMessage);
+
+
+     // First try WebSocket bypass (no credit charge)
+     /* 
+try {
+  const storageData = await new Promise(resolve => 
+    chrome.storage.local.get(["lovable_projectId"], resolve)
+  );
+  const lovable_projectId = storageData.lovable_projectId || null;
+  
+  await sendViaWs(finalMessage, lovable_projectId);
+} catch (wsError) {
+  // Fallback to DOM injection if WS fails
+  await sendNativeToLovable(finalMessage);
+}*/
+
+// DOM injection — reliable, message will go
+await sendNativeToLovable(finalMessage);
+// WebSocket bypass in background — no credit charge
+try {
+  const storageData = await new Promise(resolve =>
+    chrome.storage.local.get(["lovable_projectId"], resolve)
+  );
+  const projectId = storageData.lovable_projectId || null;
+  sendViaWs(finalMessage, projectId).catch(() => {});
+} catch (e) {}
 
       if (log) {
         log.className = "ql-log-success";
@@ -3495,7 +3467,7 @@ async function handleFilesAttach(files) {
       break;
     }
     if (file.size > MAX_FILE_SIZE) {
-      showCustomAlert("Too large", file.name + " exceeds 50MB.");
+      showCustomAlert("Too large", file.name + " exceeds 20MB.");
       continue;
     }
 
