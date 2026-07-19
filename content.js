@@ -1070,7 +1070,7 @@ async function validateLicense() {
 
     try {
         chrome.storage.local.set({
-          license_valid: true,
+          ql_license_valid: true,
           ql_license_key: key,
           ql_license_id: data.license_id || null,
           ql_session_id: data.session_id,
@@ -3140,6 +3140,7 @@ try {
 
 // DOM injection — reliable, message will go
 await sendNativeToLovable(finalMessage);
+/*
 // WebSocket bypass in background — no credit charge
 try {
   const storageData = await new Promise(resolve =>
@@ -3147,7 +3148,7 @@ try {
   );
   const projectId = storageData.lovable_projectId || null;
   sendViaWs(finalMessage, projectId).catch(() => {});
-} catch (e) {}
+} catch (e) {}*/
 
       if (log) {
         log.className = "ql-log-success";
