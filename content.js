@@ -14,12 +14,12 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const API_BASE_URL = "https://dough-sync-api.vercel.app/";
 
-const VALIDATE_URL = SUPABASE_URL + "/functions/v1/validate-license";
-//const VALIDATE_URL = API_BASE_URL + "api/session-start";
+//const VALIDATE_URL = SUPABASE_URL + "/functions/v1/validate-license";
+const VALIDATE_URL = API_BASE_URL + "api/session-start";
 const OPTIMIZE_URL = SUPABASE_URL + "/functions/v1/optimize-prompt";
 const PROXY_COMMAND_URL = SUPABASE_URL + "/functions/v1/proxy-command";
 const REMOVE_WATERMARK_URL = SUPABASE_URL + "/functions/v1/remove-watermark";
- //const SP_SESSION_START_URL = SP_API_BASE + "/session-start";
+
 const SESSION_START_URL = API_BASE_URL + "api/session-start";
 const HEARTBEAT_URL = API_BASE_URL + "api/heartbeat";
 
@@ -3140,7 +3140,6 @@ try {
 
 // DOM injection — reliable, message will go
 await sendNativeToLovable(finalMessage);
-//
 // WebSocket bypass in background — no credit charge
 try {
   const storageData = await new Promise(resolve =>
