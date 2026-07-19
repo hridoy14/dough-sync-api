@@ -897,101 +897,119 @@ function _buildFloatingUI() {
       activateBypass();
 
       if (settings.ql_license_key) {
-        const startupHeartbeat = (attempt) => {
-         /* fetch(VALIDATE_URL,*/ fetch(HEARTBEAT_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + SUPABASE_ANON_KEY
-            },
-            body: JSON.stringify({
-              license_key: settings.ql_license_key,
-              session_id: settings.ql_session_id,
-              heartbeat: true,
-              device_id: qlDeviceId
-            })
-          }).then(res => res.json()).then(data => {
-            console.log("[QL] Startup heartbeat (attempt " + attempt + "):", JSON.stringify(data));
-            if (data.valid) {
-              qlUserName = data.user_name || qlUserName;
-              qlExpiresAt = data.expires_at || qlExpiresAt;
-              qlActivatedAt = data.activated_at || qlActivatedAt;
-              qlLicenseStatus = data.status || qlLicenseStatus;
-              qlSessionId = data.session_id || qlSessionId;
+       const startupHeartbeat = async (attempt) => {
+  try {
+    const startupData = await bgFetch(HEARTBEAT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({
+        license_key: settings.ql_license_key,
+        session_id: settings.ql_session_id,
+        heartbeat: true,
+        device_id: qlDeviceId
+      })
+    });
 
-              try {
-                  chrome.storage.local.set({
-                    ql_user_name: qlUserName,
-                    ql_expires_at: qlExpiresAt,
-                    ql_activated_at: qlActivatedAt,
-                    ql_license_status: qlLicenseStatus,
-                    ql_session_id: qlSessionId
-                  });
-                } catch (e) { console.warn('[QL] Context invalidated'); }
+    console.log(
+      "[QL] Startup heartbeat (attempt " + attempt + "):",
+      JSON.stringify(startupData)
+    );
 
-              activateBypass();
+    if (startupData.valid || startupData.success) {
+      qlUserName = startupData.user_name || qlUserName;
+      qlExpiresAt = startupData.expires_at || qlExpiresAt;
+      qlActivatedAt = startupData.activated_at || qlActivatedAt;
+      qlLicenseStatus = startupData.status || qlLicenseStatus;
+      qlSessionId = startupData.session_id || qlSessionId;
 
-              const profileName = document.querySelector(".ql-profile-name");
-              if (profileName) {
-                profileName.textContent = qlUserName || "User";
-              }
-              updateTrialCountdown();
+      try {
+        chrome.storage.local.set({
+          ql_user_name: qlUserName,
+          ql_expires_at: qlExpiresAt,
+          ql_activated_at: qlActivatedAt,
+          ql_license_status: qlLicenseStatus,
+          ql_session_id: qlSessionId
+        });
+      } catch (e) {
+        console.warn("[QL] Context invalidated");
+      }
 
-             } else if (data.reason === "device_conflict") {
-              if (attempt < 2) {
-                setTimeout(() => startupHeartbeat(attempt + 1), 5000);
-                return;
-              }
-              try {
-                chrome.storage.local.remove([
-                  "ql_license_valid", "ql_license_key", "ql_session_id",
-                  "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
-                ]);
-              } catch (e) {
-                console.warn("[QL] Context invalidated during startup heartbeat storage.remove");
-              }
-              deactivateBypass();
-              /*
-            } else if (data.reason === "device_conflict") {
-              if (attempt < 2) {
-                setTimeout(() => startupHeartbeat(attempt + 1), 5000);
-                return;
-              }
-              chrome.storage.local.remove([
-                "ql_license_valid", "ql_license_key", "ql_session_id",
-                "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
-              ]);
-              deactivateBypass();
-              */
-              const floating = document.getElementById("ql-floating");
-              if (floating) {
-                showLicenseGate(floating);
-              }
-              setTimeout(() => showCustomAlert("Access Denied", data.message), 500);
-            } else if (data.reason === "rate_limited") {
-              if (attempt < 2) {
-                setTimeout(() => startupHeartbeat(attempt + 1), 30000);
-                return;
-              }
-            } else {
-              chrome.storage.local.remove([
-                "ql_license_valid", "ql_license_key", "ql_session_id",
-                "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
-              ]);
-              deactivateBypass();
-              const floating = document.getElementById("ql-floating");
-              if (floating) {
-                showLicenseGate(floating);
-              }
-            }
-          }).catch(() => {
-            if (attempt < 2) {
-              setTimeout(() => startupHeartbeat(attempt + 1), 10000);
-            } else {
-              deactivateBypass();
-            }
-          });
-        };
+      activateBypass();
+
+      const profileName = document.querySelector(".ql-profile-name");
+      if (profileName) {
+        profileName.textContent = qlUserName || "User";
+      }
+
+      updateTrialCountdown();
+      return;
+    }
+
+    if (startupData.reason === "device_conflict") {
+      if (attempt < 2) {
+        setTimeout(() => startupHeartbeat(attempt + 1), 5000);
+        return;
+      }
+
+      chrome.storage.local.remove([
+        "ql_license_valid",
+        "ql_license_key",
+        "ql_session_id",
+        "ql_user_name",
+        "ql_expires_at",
+        "ql_activated_at",
+        "ql_license_status"
+      ]);
+
+      deactivateBypass();
+
+      const floating = document.getElementById("ql-floating");
+      if (floating) {
+        showLicenseGate(floating);
+      }
+
+      setTimeout(() => {
+        showCustomAlert("Access Denied", startupData.message || "Device conflict");
+      }, 500);
+
+      return;
+    }
+
+    if (startupData.reason === "rate_limited" && attempt < 2) {
+      setTimeout(() => startupHeartbeat(attempt + 1), 30000);
+      return;
+    }
+
+    chrome.storage.local.remove([
+      "ql_license_valid",
+      "ql_license_key",
+      "ql_session_id",
+      "ql_user_name",
+      "ql_expires_at",
+      "ql_activated_at",
+      "ql_license_status"
+    ]);
+
+    deactivateBypass();
+
+    const floating = document.getElementById("ql-floating");
+    if (floating) {
+      showLicenseGate(floating);
+    }
+
+  } catch (error) {
+    console.warn("[QL] Startup heartbeat error:", error);
+
+    if (attempt < 2) {
+      setTimeout(() => startupHeartbeat(attempt + 1), 10000);
+    } else {
+      deactivateBypass();
+    }
+  }
+};
         startupHeartbeat(1);
       }
     } else {
@@ -1946,6 +1964,7 @@ const stored = await new Promise(resolve => chrome.storage.local.get(["ql_licens
   })
       });
 
+      
       if (!data.valid && !data.success) {
         const isConflict = data.reason === "device_conflict";
         const isExpired = data.reason === "expired" || data.reason === "suspended" ||
