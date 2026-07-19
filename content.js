@@ -1932,19 +1932,18 @@ function startHeartbeat(licenseKey) {
         return;
       }
 const stored = await new Promise(resolve => chrome.storage.local.get(["ql_license_key", "ql_session_id"], resolve));
-      bgFetch(HEARTBEAT_URL, {
+     const data = await bgFetch(HEARTBEAT_URL, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
     Authorization: "Bearer " + SUPABASE_ANON_KEY
   },
   body: JSON.stringify({
-   license_key: stored.ql_license_key || qlLicenseKey,
-session_id: stored.ql_session_id || qlSessionId,
+    license_key: stored.ql_license_key || qlLicenseKey,
+    session_id: stored.ql_session_id || qlSessionId,
     heartbeat: true,
     device_id: qlDeviceId
   })
-}).then(res => {
       });
 
       if (!data.valid && !data.success) {
