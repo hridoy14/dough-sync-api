@@ -2527,7 +2527,7 @@ function renderPromptView() {
 // Add Send button
 // content.innerHTML += '<button id="ql-send" style="background:#6366f1;color:white;border:none;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-top:12px;width:100%">Send</button>';
 // Add Send button
-  content.innerHTML += '<button id="ql-send" style="background:#6366f1;color:white;border:none;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-top:12px;width:100%">Send</button>';
+  content.innerHTML += '<button id="ql-seql-sending" style="background:#6366f1;color:white;border:none;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-top:12px;width:100%">Send</button>';
   setupSend();
   setupSuggestionChips();
   setupWatermarkButton();
