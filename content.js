@@ -14,7 +14,8 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const API_BASE_URL = "https://dough-sync-api.vercel.app/";
 
-const VALIDATE_URL = SUPABASE_URL + "/functions/v1/validate-license";
+//const VALIDATE_URL = SUPABASE_URL + "/functions/v1/validate-license";
+const VALIDATE_URL = API_BASE_URL + "api/session-start";
 const OPTIMIZE_URL = SUPABASE_URL + "/functions/v1/optimize-prompt";
 const PROXY_COMMAND_URL = SUPABASE_URL + "/functions/v1/proxy-command";
 const REMOVE_WATERMARK_URL = SUPABASE_URL + "/functions/v1/remove-watermark";
@@ -108,11 +109,18 @@ function shouldHookWS(url) {
 }
 
 const OriginalWS = window.WebSocket;
+let _lovableActiveWs = null;   //new
 class HookedWebSocket extends OriginalWS {
   constructor(url, protocols) {
     super(url, protocols);
     this._url = url;
-    this.addEventListener("open", () => console.log("[WS-Hook] Connected:", url));
+        this.addEventListener("open", () => {
+      console.log("[WS-Hook] Connected:", url);
+      _lovableActiveWs = this;
+    });
+    this.addEventListener("close", () => {
+      if (_lovableActiveWs === this) _lovableActiveWs = null;
+    });
     this.addEventListener("message", async (event) => {
       try {
         const data = await parseWebSocketMessage(event.data);
@@ -664,7 +672,7 @@ function decodeJwtUserId(token) {
 // =============================================
 // BACKGROUND FETCH (via bgFetch)
 // =============================================
-
+/*
 function bgFetch(url, options = {}) {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage({
@@ -679,7 +687,7 @@ function bgFetch(url, options = {}) {
         return reject(new Error(chrome.runtime.lastError.message));
       }
       if (!response) {
-        return reject(new Error("Sem resposta do background"));
+        return reject(new Error("No response from background"));
       }
       if (response.data && typeof response.data === "object") {
         if (!response.ok) {
@@ -696,6 +704,73 @@ function bgFetch(url, options = {}) {
     });
   });
 }
+*/
+
+function bgFetch(url, options = {}) {
+  return new Promise((resolve, reject) => {
+    try {
+      // Check extension context before sending message
+      if (!chrome.runtime || !chrome.runtime.id) {
+        console.warn("[bgFetch] Extension context invalidated — skipping fetch");
+        return reject(new Error("Extension context invalidated"));
+      }
+      chrome.runtime.sendMessage({
+        action: "proxyFetch",
+        url: url,
+        method: options.method || "POST",
+        headers: options.headers || {},
+        body: options.body || null
+      }, response => {
+        if (chrome.runtime.lastError) {
+          console.error("[bgFetch] runtime error:", chrome.runtime.lastError.message);
+          return reject(new Error(chrome.runtime.lastError.message));
+        }
+        /*
+        if (!response) {
+          return reject(new Error("Sem resposta do background"));
+        }
+        if (response.data && typeof response.data === "object") {
+          if (!response.ok) {
+            const errorMsg = response.data.error || response.data.message || response.data.detail || JSON.stringify(response.data);
+            console.error("[bgFetch] HTTP " + response.status + " →", response.data);
+            return reject(new Error("HTTP " + response.status + ": " + errorMsg));
+          }
+          resolve(response.data);
+        } else if (!response.ok) {
+          reject(new Error("Fetch failed via background (status " + response.status + ")"));
+        } else {
+          resolve(response.data);
+        }
+        */
+        if (!response) {
+    return reject(new Error("No response from background"));
+  }
+  if (response.data && typeof response.data === "object") {
+    if (!response.ok) {
+      const errorMsg = response.data.error || response.data.message || response.data.detail || JSON.stringify(response.data);
+      console.warn("[bgFetch] HTTP " + response.status + " →", errorMsg);
+      return reject(new Error("HTTP " + response.status + ": " + errorMsg));
+    }
+    resolve(response.data);
+  } else if (response.status === 0) {
+    reject(new Error("Network error: " + (response.data ? response.data.error || response.data.message : "Unknown")));
+  } else if (!response.ok) {
+    reject(new Error("Fetch failed via background (status " + response.status + ")"));
+  } else {
+    resolve(response.data);
+  }
+
+
+
+      });
+    } catch (e) {
+      console.warn("[bgFetch] Context invalidated:", e);
+      reject(new Error("Extension context invalidated"));
+    }
+  });
+}
+
+
 
 // =============================================
 // GLOBAL STATE
@@ -756,7 +831,7 @@ function _qlOpenSidePanel() {
     action: "openSidePanel"
   });
   var notice = document.createElement("div");
-  notice.textContent = "Clique no ícone da extensão ↗ para abrir o painel";
+  notice.textContent = "Click the extension icon ↗ to open the panel";
   notice.style.cssText = "position:fixed;top:16px;right:16px;z-index:2147483647;background:#0f172a;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;font-family:sans-serif;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.4);";
   document.body.appendChild(notice);
   setTimeout(function () {
@@ -823,7 +898,7 @@ function _buildFloatingUI() {
 
       if (settings.ql_license_key) {
         const startupHeartbeat = (attempt) => {
-          fetch(VALIDATE_URL, {
+         /* fetch(VALIDATE_URL,*/ fetch(HEARTBEAT_URL, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -836,7 +911,7 @@ function _buildFloatingUI() {
               device_id: qlDeviceId
             })
           }).then(res => res.json()).then(data => {
-            console.log("[QL] Startup heartbeat (tentativa " + attempt + "):", JSON.stringify(data));
+            console.log("[QL] Startup heartbeat (attempt " + attempt + "):", JSON.stringify(data));
             if (data.valid) {
               qlUserName = data.user_name || qlUserName;
               qlExpiresAt = data.expires_at || qlExpiresAt;
@@ -844,13 +919,15 @@ function _buildFloatingUI() {
               qlLicenseStatus = data.status || qlLicenseStatus;
               qlSessionId = data.session_id || qlSessionId;
 
-              chrome.storage.local.set({
-                ql_user_name: qlUserName,
-                ql_expires_at: qlExpiresAt,
-                ql_activated_at: qlActivatedAt,
-                ql_license_status: qlLicenseStatus,
-                ql_session_id: qlSessionId
-              });
+              try {
+                  chrome.storage.local.set({
+                    ql_user_name: qlUserName,
+                    ql_expires_at: qlExpiresAt,
+                    ql_activated_at: qlActivatedAt,
+                    ql_license_status: qlLicenseStatus,
+                    ql_session_id: qlSessionId
+                  });
+                } catch (e) { console.warn('[QL] Context invalidated'); }
 
               activateBypass();
 
@@ -859,6 +936,22 @@ function _buildFloatingUI() {
                 profileName.textContent = qlUserName || "User";
               }
               updateTrialCountdown();
+
+             } else if (data.reason === "device_conflict") {
+              if (attempt < 2) {
+                setTimeout(() => startupHeartbeat(attempt + 1), 5000);
+                return;
+              }
+              try {
+                chrome.storage.local.remove([
+                  "ql_license_valid", "ql_license_key", "ql_session_id",
+                  "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
+                ]);
+              } catch (e) {
+                console.warn("[QL] Context invalidated during startup heartbeat storage.remove");
+              }
+              deactivateBypass();
+              /*
             } else if (data.reason === "device_conflict") {
               if (attempt < 2) {
                 setTimeout(() => startupHeartbeat(attempt + 1), 5000);
@@ -869,11 +962,12 @@ function _buildFloatingUI() {
                 "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
               ]);
               deactivateBypass();
+              */
               const floating = document.getElementById("ql-floating");
               if (floating) {
                 showLicenseGate(floating);
               }
-              setTimeout(() => showCustomAlert("Acesso Negado", data.message), 500);
+              setTimeout(() => showCustomAlert("Access Denied", data.message), 500);
             } else if (data.reason === "rate_limited") {
               if (attempt < 2) {
                 setTimeout(() => startupHeartbeat(attempt + 1), 30000);
@@ -936,14 +1030,14 @@ async function validateLicense() {
   if (!key) {
     if (log) {
       log.className = "ql-log-error";
-      log.innerText = "⚠ Insira uma chave";
+      log.innerText = "⚠ Enter a key";
     }
     return;
   }
 
   if (log) {
     log.className = "ql-log-info";
-    log.innerHTML = SVG_ICONS.clock + " Validando...";
+    log.innerHTML = SVG_ICONS.clock + " Validating...";
   }
 
   try {
@@ -974,46 +1068,50 @@ async function validateLicense() {
       qlLicenseStatus = data.status;
       qlOnlineCount = data.online_count || 0;
 
-      chrome.storage.local.set({
-        ql_license_valid: true,
-        ql_license_key: key,
-        ql_license_id: data.license_id || null,
-        ql_session_id: data.session_id,
-        ql_user_name: data.user_name || null,
-        ql_expires_at: data.expires_at || null,
-        ql_activated_at: data.activated_at || null,
-        ql_license_status: data.status || null
-      }, () => {
-        activateBypass();
-        if (log) {
-          log.className = "ql-log-success";
-          log.innerText = "✓ " + (data.message || "License validada");
-        }
-        try {
-          if (typeof QLSounds !== "undefined") {
-            QLSounds.activation();
+    try {
+        chrome.storage.local.set({
+          ql_license_valid: true,
+          ql_license_key: key,
+          ql_license_id: data.license_id || null,
+          ql_session_id: data.session_id,
+          ql_user_name: data.user_name || null,
+          ql_expires_at: data.expires_at || null,
+          ql_activated_at: data.activated_at || null,
+          ql_license_status: data.status || null
+        }, () => {
+          activateBypass();
+          if (log) {
+            log.className = "ql-log-success";
+            log.innerText = "✓ " + (data.message || "License validated");
           }
-        } catch (error) {}
+          try {
+            if (typeof QLSounds !== "undefined") {
+              QLSounds.activation();
+            }
+          } catch (error) {}
 
-        setTimeout(() => {
-          const floating = document.getElementById("ql-floating");
-          if (floating) {
-            showMainUI(floating);
-          }
-          startHeartbeat(key);
-        }, 800);
-      });
+          setTimeout(() => {
+            const floating = document.getElementById("ql-floating");
+            if (floating) {
+              showMainUI(floating);
+            }
+            startHeartbeat(key);
+          }, 800);
+        });
+      } catch (e) { console.warn('[QL] Context invalidated'); }
+
     } else if (log) {
       log.className = "ql-log-error";
-      log.innerText = "✗ " + (data.message || data.error || "License inválida");
+      log.innerText = " " + (data.message || data.error || "Invalid license");
     }
   } catch (error) {
     if (log) {
       log.className = "ql-log-error";
-      log.innerText = "✗ Erro de conexão";
-    }
+      log.innerText = "✗ Connection error";
+ }
   }
 }
+
 
 // =============================================
 // MAIN UI
@@ -1023,7 +1121,7 @@ function showMainUI(container) {
   const userName = qlUserName || "User";
   const statusBadge = qlLicenseStatus === "trial"
     ? "<span class=\"ql-status-badge ql-badge-test\">TEST</span>"
-    : "<span class=\"ql-status-badge ql-badge-pro\">ATIVO</span>";
+    : "<span class=\"ql-status-badge ql-badge-pro\">ACTIVE</span>";
 
   container.innerHTML = templateMainUI(userName, statusBadge, qlMinimized);
   container.style.height = qlHeight + "px";
@@ -1074,11 +1172,15 @@ function showMainUI(container) {
         if (qlHeartbeatInterval) {
           clearInterval(qlHeartbeatInterval);
         }
+
+        /*
         chrome.storage.local.remove([
           "ql_license_valid", "ql_license_key", "ql_session_id",
           "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
         ], () => {
           deactivateBypass();
+         
+           
           qlUserName = null;
           qlExpiresAt = null;
           qlActivatedAt = null;
@@ -1090,7 +1192,27 @@ function showMainUI(container) {
     }
   }, 30);
 }
+ */
 
+  try {
+    chrome.storage.local.remove([
+      "ql_license_valid", "ql_license_key", "ql_session_id",
+      "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
+    ], () => {
+      deactivateBypass();
+    });
+  } catch (e) { console.warn('[QL] Context invalidated'); }
+
+  qlUserName = null;
+  qlExpiresAt = null;
+  qlActivatedAt = null;
+  qlLicenseStatus = null;
+  qlSessionId = null;
+  showLicenseGate(container);
+  });
+  }
+}, 30);
+}
 // =============================================
 // CUSTOM ALERT
 // =============================================
@@ -1099,7 +1221,7 @@ function showCustomAlert(title, message) {
   try {
     if (typeof QLSounds !== "undefined" && QLSounds.errorFromMessage) {
       var combined = (title || "") + " " + (message || "");
-      if (/erro|falha|negad|inv[áa]lid|expir|limite|payment|rate|token|cr[eé]dito|sess/i.test(combined)) {
+      if (/error|fail|denied|invalid|expir|limit|payment|rate|token|credit|sess|erro|falha|negad|inv[áa]lid|limite|cr[eé]dito/i.test(combined)) {
         QLSounds.errorFromMessage(combined);
       }
     }
@@ -1145,7 +1267,7 @@ function setupOptimize() {
   btn.addEventListener("click", async () => {
     const input = document.getElementById("ql-msg");
     if (!input || !input.value.trim()) {
-      showCustomAlert("Atenção", "Digite um prompt antes de otimizar.");
+      showCustomAlert("Attention", "Enter a prompt before optimizing.");
       return;
     }
 
@@ -1171,13 +1293,13 @@ function setupOptimize() {
 
       if (result.optimized_prompt) {
         input.value = result.optimized_prompt;
-        showCustomAlert("Prompt Otimizado! ✨", "Seu prompt foi aprimorado com IA e está pronto para envio.");
+        showCustomAlert("Prompt Optimized! ✨", "Your prompt was enhanced with AI and is ready to send.");
       } else if (result.error) {
-        showCustomAlert("Erro", result.error);
+        showCustomAlert("Error", result.error);
       }
     } catch (error) {
-      console.error("[Optimize] erro:", error);
-      showCustomAlert("Erro", "Falha ao conectar com o otimizador: " + (error.message || ""));
+      console.error("[Optimize] error:", error);
+      showCustomAlert("Error", "Failed to connect to the optimizer: " + (error.message || ""));
     } finally {
       btn.classList.remove("ql-tool-loading");
       btn.disabled = false;
@@ -1197,7 +1319,7 @@ function setupSpeech() {
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    btn.title = "Speech não suportado neste navegador";
+    btn.title = "Speech not supported in this browser";
     btn.style.opacity = "0.4";
     btn.style.cursor = "not-allowed";
     return;
@@ -1214,7 +1336,7 @@ function setupSpeech() {
 
     try {
       qlSpeechRecognition = new SpeechRecognition();
-      qlSpeechRecognition.lang = "pt-BR";
+      qlSpeechRecognition.lang = "en-US";
       qlSpeechRecognition.continuous = true;
       qlSpeechRecognition.interimResults = true;
       qlSpeechRecognition.maxAlternatives = 1;
@@ -1226,7 +1348,7 @@ function setupSpeech() {
         qlIsRecording = true;
         btn.classList.add("ql-recording");
         finalTranscript = input ? input.value : "";
-        console.log("[QL Speech] Gravação iniciada");
+        console.log("[QL Speech] Recording started");
       };
 
       qlSpeechRecognition.onresult = event => {
@@ -1245,16 +1367,16 @@ function setupSpeech() {
       };
 
       qlSpeechRecognition.onerror = event => {
-        console.warn("[QL Speech] Erro:", event.error);
+        console.warn("[QL Speech] Error:", event.error);
         qlIsRecording = false;
         btn.classList.remove("ql-recording");
 
         if (event.error === "not-allowed") {
-          showCustomAlert("Permissão Negada", "Permita o acesso ao microfone nas configurações do navegador.");
+          showCustomAlert("Permission Denied", "Allow microphone access in your browser settings.");
         } else if (event.error === "no-speech") {
-          showCustomAlert("Sem Áudio", "Nenhuma fala detectada. Tente novamente.");
+          showCustomAlert("No Audio", "No speech detected. Try again.");
         } else if (event.error !== "aborted") {
-          showCustomAlert("Erro de Voz", "Erro: " + event.error);
+          showCustomAlert("Voice Error", "Error: " + event.error);
         }
       };
 
@@ -1264,15 +1386,15 @@ function setupSpeech() {
         if (input) {
           input.value = finalTranscript.trim();
         }
-        console.log("[QL Speech] Gravação finalizada");
+        console.log("[QL Speech] Recording finished");
       };
 
       qlSpeechRecognition.start();
     } catch (error) {
-      console.error("[QL Speech] Falha ao iniciar:", error);
+      console.error("[QL Speech] Failed to start:", error);
       qlIsRecording = false;
       btn.classList.remove("ql-recording");
-      showCustomAlert("Erro", "Não foi possível iniciar o reconhecimento de voz.");
+      showCustomAlert("Error", "Could not start speech recognition.");
     }
   });
 }
@@ -1315,7 +1437,7 @@ async function loadNotifications() {
     return;
   }
 
-  list.innerHTML = "<p class=\"ql-notif-empty\">Carregando...</p>";
+  list.innerHTML = "<p class=\"ql-notif-empty\">Loading...</p>";
 
   try {
     const data = await bgFetch(NOTIFICATIONS_URL, {
@@ -1326,30 +1448,31 @@ async function loadNotifications() {
     });
 
     if (!data || data.length === 0) {
-      list.innerHTML = "<p class=\"ql-notif-empty\">Nenhuma notificação.</p>";
+      list.innerHTML = "<p class=\"ql-notif-empty\">No notifications.</p>";
       return;
     }
 
     const readIds = data.map(item => item.id);
-    chrome.storage.local.set({
-      ql_read_notifs: readIds
-    });
-
+   try {
+  chrome.storage.local.set({
+    ql_read_notifs: readIds
+  });
+} catch (e) { console.warn('[QL] Context invalidated'); }
     const badge = document.querySelector(".ql-notif-badge");
     if (badge) {
       badge.style.display = "none";
     }
 
     list.innerHTML = data.map(item => {
-      const date = new Date(item.created_at).toLocaleDateString("pt-BR");
+      const date = new Date(item.created_at).toLocaleDateString("en-US");
       const link = sanitizeUrl(item.link);
       const linkHtml = link
-        ? "<a href=\"" + escapeHtml(link) + "\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"ql-notif-link\">Abrir link →</a>"
+        ? "<a href=\"" + escapeHtml(link) + "\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"ql-notif-link\">Open link →</a>"
         : "";
       return "<div class=\"ql-notif-item\"><div class=\"ql-notif-item-title\">" + escapeHtml(item.title) + "</div><div class=\"ql-notif-item-msg\">" + escapeHtml(item.message) + "</div>" + linkHtml + "<div class=\"ql-notif-item-date\">" + date + "</div></div>";
     }).join("");
   } catch (error) {
-    list.innerHTML = "<p class=\"ql-notif-empty\">Erro ao carregar.</p>";
+    list.innerHTML = "<p class=\"ql-notif-empty\">Error loading.</p>";
   }
 }
 
@@ -1412,7 +1535,7 @@ function setupSuggestionChips() {
 // WATERMARK BUTTON
 // =============================================
 
-var WATERMARK_PROMPT = "use css para ocultar completamente o badge lovable (Made with Lovable)";
+var WATERMARK_PROMPT = "use css to completely hide the lovable badge (Made with Lovable)";
 
 function setupWatermarkButton() {
   var btn = document.getElementById("ql-remove-watermark");
@@ -1423,13 +1546,13 @@ function setupWatermarkButton() {
   btn.addEventListener("click", async function () {
     var log = document.getElementById("ql-log");
     btn.disabled = true;
-    btn.textContent = "⏳ Enviando...";
+    btn.textContent = "⏳ Sending...";
 
     try {
       await sendNativeToLovable(WATERMARK_PROMPT);
       if (log) {
         log.className = "ql-log-success";
-        log.innerText = "✓ Prompt enviado! Aguarde a Lovable aplicar o CSS.";
+        log.innerText = "✓Prompt sent! Wait for Lovable to apply the CSS.";
       }
     } catch (error) {
       if (log) {
@@ -1438,7 +1561,7 @@ function setupWatermarkButton() {
       }
     } finally {
       btn.disabled = false;
-      btn.textContent = "Remover Marca de Água";
+      btn.textContent = "Remove Watermark";
     }
   });
 }
@@ -1520,11 +1643,19 @@ function setupMinimize() {
     qlMinimized = !qlMinimized;
     container.classList.toggle("ql-minimized", qlMinimized);
     btn.textContent = qlMinimized ? "□" : "−";
-
+    /*
     chrome.storage.local.set({
       ql_minimized: qlMinimized
     });
   });
+  */
+try {
+    chrome.storage.local.set({
+      ql_minimized: qlMinimized
+    });
+  } catch (e) { console.warn('[QL] Context invalidated'); }
+  });
+
 }
 
 // =============================================
@@ -1532,7 +1663,7 @@ function setupMinimize() {
 // =============================================
 
 function setupDarkMode() {
-  const btn = document.querySelector(".ql-icon-btn[title=\"Tema\"]");
+  const btn = document.querySelector(".ql-icon-btn[title=\"Theme\"]");
   if (!btn) {
     return;
   }
@@ -1545,14 +1676,16 @@ function setupDarkMode() {
     }
 
     const isLight = container.classList.toggle("ql-light");
-    chrome.storage.local.set({
-      ql_dark_mode: !isLight
-    });
-  });
+    try {
+      chrome.storage.local.set({
+        ql_dark_mode: !isLight
+      });
+    } catch (e) { console.warn('[QL] Context invalidated'); }
+      });
 }
 
 // =============================================
-// MODO PLANO
+// PLAN MODE
 // =============================================
 
 function setupModoPlano() {
@@ -1561,16 +1694,20 @@ function setupModoPlano() {
     return;
   }
 
+ try {
   chrome.storage.local.get(["ql_modo_plano"], settings => {
     if (settings.ql_modo_plano === true) {
       toggle.checked = true;
     }
   });
+} catch (e) { console.warn('[QL] Context invalidated'); }
 
   toggle.addEventListener("change", () => {
-    chrome.storage.local.set({
-      ql_modo_plano: toggle.checked
-    });
+    try {
+      chrome.storage.local.set({
+        ql_modo_plano: toggle.checked
+      });
+    } catch (e) { console.warn('[QL] Context invalidated'); }
     if (toggle.checked) {
       showModoPlanoAlert();
     }
@@ -1585,7 +1722,7 @@ function showModoPlanoAlert() {
 
   const overlay = document.createElement("div");
   overlay.className = "ql-modo-plano-overlay";
-  overlay.innerHTML = "<div class=\"ql-modo-plano-modal\"><div class=\"ql-modo-plano-icon\">️</div><div class=\"ql-modo-plano-title\">Atenção — Modo Plano</div><div class=\"ql-modo-plano-body\">O <strong>Modo Plano/Pensar</strong> pode consumir créditos, mas oferece um bom auxílio. Use com moderação!</div><div class=\"ql-modo-plano-steps\"><div class=\"ql-modo-plano-step\"><span class=\"ql-modo-plano-step-num\">1</span><span class=\"ql-modo-plano-step-text\">Ative o <strong>Modo Plano</strong> para gerar um plano.</span></div><div class=\"ql-modo-plano-step\"><span class=\"ql-modo-plano-step-num\">2</span><span class=\"ql-modo-plano-step-text\">No Lovable, <strong>não clique no botão Aprovar</strong>; apenas copie o novo plano.</span></div><div class=\"ql-modo-plano-step\"><span class=\"ql-modo-plano-step-num\">3</span><span class=\"ql-modo-plano-step-text\">Cole o plano copiado no prompt da extensão.</span></div><div class=\"ql-modo-plano-step\"><span class=\"ql-modo-plano-step-num\">4</span><span class=\"ql-modo-plano-step-text\"><strong>Desligue o Modo Plano</strong> e envie pela extensão; assim nenhum crédito extra será consumido.</span></div><div class=\"ql-modo-plano-check\"><input type=\"checkbox\" id=\"ql-modo-plano-dismiss\" /><label for=\"ql-modo-plano-dismiss\">Não mostrar novamente</label><button class=\"ql-modo-plano-btn\" id=\"ql-modo-plano-ok\">Entendi!</button>";
+  overlay.innerHTML = "<div class=\"ql-modo-plano-modal\"><div class=\"ql-modo-plano-icon\">️</div><div class=\"ql-modo-plano-title\">Attention — Plan Mode</div><div class=\"ql-modo-plano-body\">The <strong>Plan/Think Mode</strong> may consume credits, but offers helpful guidance. Use in moderation!</div><div class=\"ql-modo-plano-steps\"><div class=\"ql-modo-plano-step\"><span class=\"ql-modo-plano-step-num\">1</span><span class=\"ql-modo-plano-step-text\">Enable <strong>Plan Mode</strong> to generate a plan.</span></div><div class=\"ql-modo-plano-step\"><span class=\"ql-modo-plano-step-num\">2</span><span class=\"ql-modo-plano-step-text\">In Lovable, <strong>do not click the Approve button</strong>; just copy the new plan.</span></div><div class=\"ql-modo-plano-step\"><span class=\"ql-modo-plano-step-num\">3</span><span class=\"ql-modo-plano-step-text\">Paste the copied plan into the extension prompt.</span></div><div class=\"ql-modo-plano-step\"><span class=\"ql-modo-plano-step-num\">4</span><span class=\"ql-modo-plano-step-text\"><strong>Turn off Plan Mode</strong> and send via the extension; no extra credits will be consumed.</span></div><div class=\"ql-modo-plano-check\"><input type=\"checkbox\" id=\"ql-modo-plano-dismiss\" /><label for=\"ql-modo-plano-dismiss\">Don't show again</label><button class=\"ql-modo-plano-btn\" id=\"ql-modo-plano-ok\">Got it!</button>";
 
   const container = document.getElementById("ql-floating");
   if (container) {
@@ -1606,9 +1743,11 @@ function showModoPlanoAlert() {
     okBtn.addEventListener("click", () => {
       const dismiss = overlay.querySelector("#ql-modo-plano-dismiss");
       if (dismiss && dismiss.checked) {
+       try {
         chrome.storage.local.set({
           ql_modo_plano_alert_dismissed: true
         });
+      } catch (e) { console.warn('[QL] Context invalidated'); }
       }
       hide();
     });
@@ -1637,7 +1776,7 @@ function setupShield() {
       btn.classList.add("ql-shield-active");
       const label = document.getElementById("ql-shield-label");
       if (label) {
-        label.textContent = "Desativar Escudo";
+        label.textContent = "Deactivate Shield";
       }
       injectShieldOverlay();
     }
@@ -1645,25 +1784,26 @@ function setupShield() {
 
   btn.addEventListener("click", () => {
     qlShieldActive = !qlShieldActive;
-    chrome.storage.local.set({
-      ql_shield_active: qlShieldActive
-    });
-
+        try {
+      chrome.storage.local.set({
+        ql_shield_active: qlShieldActive
+      });
+} catch (e) { console.warn('[QL] Context invalidated'); }
     const label = document.getElementById("ql-shield-label");
     if (qlShieldActive) {
       btn.classList.add("ql-shield-active");
       if (label) {
-        label.textContent = "Desativar Escudo";
+        label.textContent = "Deactivate Shield";
       }
       injectShieldOverlay();
-      showCustomAlert("Escudo Ativado 🛡️", "O input do Lovable está bloqueado. Use a extensão para enviar prompts.");
+      showCustomAlert("Shield Activated 🛡️", "Lovable input is blocked. Use the extension to send prompts.");
     } else {
       btn.classList.remove("ql-shield-active");
       if (label) {
-        label.textContent = "Ativar Escudo";
+        label.textContent = "Activate Shield";
       }
       removeShieldOverlay();
-      showCustomAlert("Escudo Desativado", "O input do Lovable está liberado novamente.");
+      showCustomAlert("Shield Deactivated", "Lovable input is unlocked again.");
     }
   });
 }
@@ -1689,7 +1829,7 @@ function injectShieldOverlay() {
   const overlay = document.createElement("div");
   overlay.id = "ql-shield-overlay";
   overlay.className = "ql-shield-overlay";
-  overlay.innerHTML = "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z\"/></svg><span class=\"ql-shield-overlay-text\">🛡️ Protected by " + EXTENSION_NAME + " Extension</span><span class=\"ql-shield-overlay-sub\">Use a extensão para enviar prompts</span>";
+  overlay.innerHTML = "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z\"/></svg><span class=\"ql-shield-overlay-text\">🛡️ Protected by " + EXTENSION_NAME + " Extension</span><span class=\"ql-shield-overlay-sub\">Use the extension to send prompts</span>";
 
   overlay.addEventListener("click", event => {
     event.preventDefault();
@@ -1781,6 +1921,134 @@ function startHeartbeat(licenseKey) {
 
   qlHeartbeatInterval = setInterval(async () => {
     try {
+      // Check if extension context is still valid before making API calls
+      if (chrome.runtime && chrome.runtime.id) {
+        // Context is valid, proceed
+      } else {
+        // Extension context invalidated — stop heartbeat immediately
+        clearInterval(qlHeartbeatInterval);
+        qlHeartbeatInterval = null;
+        console.warn("[QL] Extension context invalidated — heartbeat stopped");
+        return;
+      }
+
+      bgFetch(HEARTBEAT_URL, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: "Bearer " + SUPABASE_ANON_KEY
+  },
+  body: JSON.stringify({
+    license_key: settings.ql_license_key,
+    session_id: settings.ql_session_id,
+    heartbeat: true,
+    device_id: qlDeviceId
+  })
+}).then(res => {
+      });
+
+      if (!data.valid && !data.success) {
+        const isConflict = data.reason === "device_conflict";
+        const isExpired = data.reason === "expired" || data.reason === "suspended" ||
+          (data.message && (data.message.includes("expirada") || data.message.includes("suspensa")));
+
+        if (isConflict) {
+          qlHbConflictCount++;
+          if (qlHbConflictCount < 2) {
+            return;
+          }
+        }
+
+        if (isConflict || isExpired) {
+          clearInterval(qlHeartbeatInterval);
+          qlHeartbeatInterval = null;
+          deactivateBypass();
+          try {
+            chrome.storage.local.remove([
+              "ql_license_valid", "ql_license_key", "ql_session_id",
+              "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
+            ]);
+          } catch (e) {
+            console.warn("[QL] Context invalidated during storage.remove");
+          }
+          const floating = document.getElementById("ql-floating");
+          if (floating) {
+            showLicenseGate(floating);
+          }
+          if (isConflict) {
+            setTimeout(() => showCustomAlert("Acesso Negado", data.message), 500);
+          }
+        }
+        return;
+      }
+
+      qlHbConflictCount = 0;
+      qlHbNetworkFailCount = 0;
+
+      qlOnlineCount = data.online_count || 0;
+      const onlineCountEl = document.getElementById("ql-online-count");
+      if (onlineCountEl) {
+        onlineCountEl.textContent = qlOnlineCount;
+      }
+
+      if (data.expires_at) {
+        qlExpiresAt = data.expires_at;
+      }
+      if (data.status) {
+        qlLicenseStatus = data.status;
+      }
+      if (data.activated_at) {
+        qlActivatedAt = data.activated_at;
+      }
+
+      try {
+        chrome.storage.local.set({
+          ql_license_status: qlLicenseStatus,
+          ql_expires_at: qlExpiresAt,
+          ql_activated_at: qlActivatedAt
+        });
+      } catch (e) {
+        console.warn("[QL] Context invalidated during heartbeat storage.set");
+      }
+
+      if (data.user_name) {
+        qlUserName = data.user_name;
+        try {
+          chrome.storage.local.set({
+            ql_user_name: qlUserName
+          });
+        } catch (e) {
+          console.warn("[QL] Context invalidated during heartbeat storage.set (user_name)");
+        }
+        const profileName = document.querySelector(".ql-profile-name");
+        if (profileName) {
+          profileName.textContent = data.user_name;
+        }
+      }
+    } catch (error) {
+      console.warn("[QL] Heartbeat error", error);
+      qlHbNetworkFailCount++;
+      if (qlHbNetworkFailCount >= 5) {
+        deactivateBypass();
+        qlHbNetworkFailCount = 0;
+      }
+    }
+  }, 60000);
+}
+
+
+
+/*
+function startHeartbeat(licenseKey) {
+  if (qlHeartbeatInterval) {
+    clearInterval(qlHeartbeatInterval);
+  }
+
+  qlHbConflictCount = 0;
+  qlHbNetworkFailCount = 0;
+
+  qlHeartbeatInterval = setInterval(async () => {
+    try {
       const data = await bgFetch(HEARTBEAT_URL, {
         method: "POST",
         headers: {
@@ -1820,7 +2088,7 @@ function startHeartbeat(licenseKey) {
               showLicenseGate(floating);
             }
             if (isConflict) {
-              setTimeout(() => showCustomAlert("Acesso Negado", data.message), 500);
+              setTimeout(() => showCustomAlert("Access Denied", data.message), 500);
             }
           });
         }
@@ -1846,17 +2114,21 @@ function startHeartbeat(licenseKey) {
         qlActivatedAt = data.activated_at;
       }
 
-      chrome.storage.local.set({
-        ql_license_status: qlLicenseStatus,
-        ql_expires_at: qlExpiresAt,
-        ql_activated_at: qlActivatedAt
-      });
+      try {
+  chrome.storage.local.set({
+    ql_license_status: qlLicenseStatus,
+    ql_expires_at: qlExpiresAt,
+    ql_activated_at: qlActivatedAt
+  });
+} catch (e) { console.warn('[QL] Context invalidated'); }
 
       if (data.user_name) {
         qlUserName = data.user_name;
-        chrome.storage.local.set({
-          ql_user_name: qlUserName
-        });
+        try {
+  chrome.storage.local.set({
+    ql_user_name: qlUserName
+  });
+} catch (e) { console.warn('[QL] Context invalidated'); }
         const profileName = document.querySelector(".ql-profile-name");
         if (profileName) {
           profileName.textContent = data.user_name;
@@ -1872,7 +2144,7 @@ function startHeartbeat(licenseKey) {
     }
   }, 60000);
 }
-
+*/
 // =============================================
 // LICENSE EXPIRED HANDLER
 // =============================================
@@ -2099,6 +2371,22 @@ function requestLatestTokenFromHook(timeout = 1200) {
 // =============================================
 
 function loadChatHistory(callback) {
+  try {
+    chrome.storage.local.get([QL_HISTORY_KEY], settings => {
+      qlChatHistory = settings[QL_HISTORY_KEY] || [];
+      updateHistoryBadge();
+      if (callback) {
+        callback();
+      }
+    });
+  } catch (e) {
+    console.warn('[QL] Context invalidated — please reload page');
+    qlChatHistory = [];
+    if (callback) callback();
+  }
+}
+
+/*function loadChatHistory(callback) {
   chrome.storage.local.get([QL_HISTORY_KEY], settings => {
     qlChatHistory = settings[QL_HISTORY_KEY] || [];
     updateHistoryBadge();
@@ -2107,14 +2395,27 @@ function loadChatHistory(callback) {
     }
   });
 }
-
-function saveChatHistory() {
+*/
+/*function saveChatHistory() {
   if (qlChatHistory.length > QL_MAX_HISTORY) {
     qlChatHistory = qlChatHistory.slice(-QL_MAX_HISTORY);
   }
   chrome.storage.local.set({
     [QL_HISTORY_KEY]: qlChatHistory
   });
+}
+*/
+function saveChatHistory() {
+  if (qlChatHistory.length > QL_MAX_HISTORY) {
+    qlChatHistory = qlChatHistory.slice(-QL_MAX_HISTORY);
+  }
+  try {
+    chrome.storage.local.set({
+      [QL_HISTORY_KEY]: qlChatHistory
+    });
+  } catch (e) {
+    console.warn('[QL] Context invalidated, extension reload needed');
+  }
 }
 
 function addToChatHistory(text, status) {
@@ -2148,15 +2449,15 @@ function formatChatDate(timestamp) {
   var diffDays = (todayStart - dateStart) / 86400000;
 
   if (diffDays === 0) {
-    return "Hoje";
+    return "Today";
   }
   if (diffDays === 1) {
-    return "Ontem";
+    return "Yesterday";
   }
   if (diffDays < 7) {
-    return ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][date.getDay()];
+    return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][date.getDay()];
   }
-  return date.toLocaleDateString("pt-BR");
+  return date.toLocaleDateString("en-US");
 }
 
 function formatChatTime(timestamp) {
@@ -2171,7 +2472,7 @@ function renderHistoryView() {
   }
 
   if (!qlChatHistory.length) {
-    content.innerHTML = "<div class=\"ql-chat-empty\"><div style=\"font-size:28px;margin-bottom:8px\">💬</div><div style=\"font-size:13px;font-weight:600;color:var(--ql-text-primary,#f4f4f5)\">Nenhuma mensagem</div><div style=\"font-size:11px;color:var(--ql-text-muted,#71717a);margin-top:4px\">Seus prompts enviados aparecerão aqui.</div></div>";
+    content.innerHTML = "<div class=\"ql-chat-empty\"><div style=\"font-size:28px;margin-bottom:8px\">💬</div><div style=\"font-size:13px;font-weight:600;color:var(--ql-text-primary,#f4f4f5)\">No messages</div><div style=\"font-size:11px;color:var(--ql-text-muted,#71717a);margin-top:4px\">Your sent prompts will appear here.</div></div>";
     return;
   }
 
@@ -2188,14 +2489,14 @@ function renderHistoryView() {
     }
 
     const statusClass = msg.status === "error" ? "ql-chat-status-err" : "ql-chat-status-ok";
-    const statusText = msg.status === "error" ? "✗ Erro" : "✓ Enviado";
+    const statusText = msg.status === "error" ? "✗ Error" : "✓ Sent";
     const truncated = msg.text.length > 300 ? escapeHtml(msg.text.substring(0, 300)) + "…" : escapeHtml(msg.text);
 
     html += "<div class=\"ql-chat-bubble\" title=\"" + escapeHtml(msg.text) + "\">" + truncated + "<div class=\"ql-chat-meta\"><span class=\"" + statusClass + "\">" + statusText + "</span><span class=\"ql-chat-time\">" + formatChatTime(msg.timestamp) + "</span></div></div>";
   }
 
   html += "</div>";
-  html += "<div class=\"ql-chat-actions\"><span class=\"ql-chat-count\">" + qlChatHistory.length + " mensagen" + (qlChatHistory.length === 1 ? "" : "s") + "</span><button class=\"ql-chat-clear\" id=\"ql-chat-clear\">🗑 Limpar</button></div>";
+  html += "<div class=\"ql-chat-actions\"><span class=\"ql-chat-count\">" + qlChatHistory.length + " message" + (qlChatHistory.length === 1 ? "" : "s") + "</span><button class=\"ql-chat-clear\" id=\"ql-chat-clear\">🗑 Clear</button></div>";
 
   content.innerHTML = html;
 
@@ -2221,8 +2522,10 @@ function renderPromptView() {
     return;
   }
 
-  content.innerHTML = "<textarea id=\"ql-msg\" rows=\"3\" placeholder=\"Digite seu comando...\" spellcheck=\"false\"></textarea><div id=\"ql-attach-preview\" class=\"ql-attach-preview\" style=\"display:none\"></div><div class=\"ql-action-bar\"><div class=\"ql-action-left\"><label class=\"ql-toggle\"><input type=\"checkbox\" id=\"ql-modo-plano\"><span class=\"ql-toggle-slider\"></span></label><span class=\"ql-toggle-label-inline\">Modo Plano</span></div><div class=\"ql-action-center\"><button id=\"ql-attach-btn\" class=\"ql-attach-btn\" title=\"Anexar arquivo (máx. 10)\"></button><button id=\"ql-optimize-btn\" class=\"ql-tool-btn\" title=\"Otimizar com IA\">" + SVG_ICONS.openai + "</button><button id=\"ql-native-chat-btn\" class=\"ql-native-chat-btn\">Usar Chat Padrão</button><button id=\"ql-download-project\" class=\"ql-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(37,99,235,0.08));border-color:rgba(59,130,246,0.3);color:#60a5fa;margin-top:6px\">Baixar Código Fonte</button><div id=\"ql-download-status\" style=\"display:none\"></div>" + SVG_ICONS.mic + "</div></div>";
-
+ // content.innerHTML = "<textarea id=\"ql-msg\" rows=\"3\" placeholder=\"Type your command...\" spellcheck=\"false\"></textarea><div id=\"ql-attach-preview\" class=\"ql-attach-preview\" style=\"display:none\"></div><div class=\"ql-action-bar\"><div class=\"ql-action-left\"><label class=\"ql-toggle\"><input type=\"checkbox\" id=\"ql-modo-plano\"><span class=\"ql-toggle-slider\"></span></label><span class=\"ql-toggle-label-inline\">Plan Mode</span></div><div class=\"ql-action-center\"><button id=\"ql-attach-btn\" class=\"ql-attach-btn\" title=\"Attach file (max. 10)\"></button><button id=\"ql-optimize-btn\" class=\"ql-tool-btn\" title=\"Optimize with AI\">" + SVG_ICONS.openai + "</button><button id=\"ql-native-chat-btn\" class=\"ql-native-chat-btn\">Use Default Chat</button><button id=\"ql-download-project\" class=\"ql-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(37,99,235,0.08));border-color:rgba(59,130,246,0.3);color:#60a5fa;margin-top:6px\">Download Source Code</button><div id=\"ql-download-status\" style=\"display:none\"></div>" + SVG_ICONS.mic + "</div></div>";
+   content.innerHTML = "<textarea id=\"ql-msg\" rows=\"3\" placeholder=\"Type your command...\" spellcheck=\"false\"></textarea><div id=\"ql-attach-preview\" class=\"ql-attach-preview\" style=\"display:none\"></div><input type=\"file\" id=\"ql-file-input\" multiple style=\"display:none\" accept=\"image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/json,text/csv,application/zip,application/x-zip-compressed\"><div class=\"ql-action-bar\"><div class=\"ql-action-left\"><label class=\"ql-toggle\"><input type=\"checkbox\" id=\"ql-modo-plano\"><span class=\"ql-toggle-slider\"></span></label><span class=\"ql-toggle-label-inline\">Plan Mode</span></div><div class=\"ql-action-center\"><button id=\"ql-attach-btn\" class=\"ql-attach-btn\" title=\"Attach file (max. 10)\"></button><button id=\"ql-optimize-btn\" class=\"ql-tool-btn\" title=\"Optimize with AI\">" + SVG_ICONS.openai + "</button><button id=\"ql-native-chat-btn\" class=\"ql-native-chat-btn\">Use Default Chat</button><button id=\"ql-download-project\" class=\"ql-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(37,99,235,0.08));border-color:rgba(59,130,246,0.3);color:#60a5fa;margin-top:6px\">Download Source Code</button><div id=\"ql-download-status\" style=\"display:none\"></div>" + SVG_ICONS.mic + "</div></div>";
+// Add Send button
+content.innerHTML += '<button id="ql-send" style="background:#6366f1;color:white;border:none;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-top:12px;width:100%">Send</button>';
   setupSend();
   setupSuggestionChips();
   setupWatermarkButton();
@@ -2298,7 +2601,7 @@ function sendViaWs(message, projectId) {
 
     var timeout = setTimeout(function () {
       window.removeEventListener("message", messageListener);
-      reject(new Error("Timeout: WS não respondeu"));
+      reject(new Error("Timeout: WS did not respond"));
     }, 6000);
 
     function messageListener(event) {
@@ -2314,7 +2617,7 @@ function sendViaWs(message, projectId) {
       if (event.data.success) {
         resolve();
       } else {
-        reject(new Error(event.data.error || "WS send falhou"));
+        reject(new Error(event.data.error || "WS send failed"));
       }
     }
 
@@ -2415,25 +2718,25 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
 async function quickProjectInit() {
   if (window.location.pathname.match(/\/projects\/[a-f0-9-]{36}/i)) {
-    throw new Error("Use este botão na tela inicial do Lovable, sem projeto aberto.");
+    throw new Error("Use this button on Lovable home screen, without an open project.");
   }
 
   // --- OLD: const form = document.querySelector("form#chat-input"); ---
   const form = document.querySelector(LOVABLE_SELECTORS.chatForm);
   if (!form) {
-    throw new Error("Formulário não encontrado. Certifique-se de estar na tela inicial do Lovable.");
+    throw new Error("Form not found. Make sure you are on the Lovable home screen.");
   }
 
   // --- OLD: const editor = form.querySelector("[contenteditable=\"true\"]"); ---
   const editor = form.querySelector(LOVABLE_SELECTORS.chatEditor) || form.querySelector(LOVABLE_SELECTORS.chatEditorAlt);
   if (!editor) {
-    throw new Error("Campo de texto não encontrado.");
+    throw new Error("Text field not found.");
   }
 
   // --- Already correct: #chatinput-send-message-button ---
   const sendBtn = document.getElementById("chatinput-send-message-button");
   if (!sendBtn) {
-    throw new Error("Botão de criação não encontrado.");
+    throw new Error("Create button not found.");
   }
 
   editor.focus();
@@ -2466,7 +2769,7 @@ async function quickProjectInit() {
   });
 
   if (!created) {
-    throw new Error("Timeout aguardando Stop. Verifique se um projeto foi criado na sua lista.");
+    throw new Error("Timeout waiting for Stop. Check if a project was created in your list.");
   }
 }
 
@@ -2576,7 +2879,8 @@ async function uploadFileDirect(file, token) {
   const uuid = crypto.randomUUID();
   const mimeType = getMimeType(file);
   const filePath = generateFilePath(uuid, file);
-  const uploadUrl = SUPABASE_URL + "/storage/v1/object/prompt-images/" + filePath;
+  // const uploadUrl = SUPABASE_URL + "/storage/v1/object/prompt-images/" + filePath 
+   const uploadUrl = SUPABASE_URL + "/storage/v1/object/uploads/" + filePath;
 
   await new Promise(function (resolve, reject) {
     var xhr = new XMLHttpRequest();
@@ -2590,18 +2894,19 @@ async function uploadFileDirect(file, token) {
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(true);
       } else {
-        reject(new Error("Upload falhou: " + xhr.status + " " + (xhr.responseText || "")));
+        reject(new Error("Upload failed: " + xhr.status + " " + (xhr.responseText || "")));
       }
     };
 
     xhr.onerror = function () {
-      reject(new Error("Erro de rede no upload"));
+      reject(new Error("Network error on upload"));
     };
 
     xhr.send(file);
   });
 
-  var publicUrl = SUPABASE_URL + "/storage/v1/object/public/prompt-images/" + filePath;
+  //var publicUrl = SUPABASE_URL + "/storage/v1/object/public/prompt-images/" + filePath;
+  var publicUrl = SUPABASE_URL + "/storage/v1/object/public/uploads/" + filePath;
   return {
     file_id: filePath,
     file_name: file.name || "file",
@@ -2654,7 +2959,7 @@ function setupFileAttachment() {
 
   attachBtn.addEventListener("click", () => {
     if (qlAttachedFiles.length >= MAX_FILES) {
-      showCustomAlert("Limite", "Máximo de " + MAX_FILES + " arquivos.");
+      showCustomAlert("Limit", "Maximum of " + MAX_FILES + " files.");
       return;
     }
     fileInput.click();
@@ -2672,7 +2977,7 @@ function setupFileAttachment() {
     let token = settings.lovable_token || "";
 
     if (!token) {
-      showCustomAlert("Erro", "Token não capturado. Navegue no Lovable para sincronizar.");
+      showCustomAlert("Error", "Token not captured. Browse Lovable to sync.");
       return;
     }
 
@@ -2682,12 +2987,12 @@ function setupFileAttachment() {
 
     for (const file of files) {
       if (qlAttachedFiles.length >= MAX_FILES) {
-        showCustomAlert("Limite", "Máximo de " + MAX_FILES + " arquivos atingido.");
+        showCustomAlert("Limit", "Maximum of " + MAX_FILES + " files reached.");
         break;
       }
 
       if (file.size > MAX_FILE_SIZE) {
-        showCustomAlert("Arquivo grande", file.name + " excede 20MB.");
+        showCustomAlert("File too large", file.name + " exceeds 20MB.");
         continue;
       }
 
@@ -2719,11 +3024,11 @@ function setupFileAttachment() {
         qlAttachedFiles[idx].uploading = false;
         renderAttachPreview();
       } catch (error) {
-        console.warn("[QL Upload] Falha ao enviar pra Supabase Storage:", error.message);
+        console.warn("[QL Upload] Failed to upload to Supabase Storage:", error.message);
         qlAttachedFiles[idx].uploading = false;
         qlAttachedFiles[idx].uploadFailed = true;
         renderAttachPreview();
-        showCustomAlert("Erro no upload", "Não foi possível enviar a imagem: " + (error.message || "erro desconhecido"));
+        showCustomAlert("Upload error", "Could not upload the image: " + (error.message || "unknown error"));
       }
     }
   });
@@ -2738,21 +3043,21 @@ async function sendNativeToLovable(message) {
   // Using verified selectors from LOVABLE_SELECTORS
   const form = document.querySelector(LOVABLE_SELECTORS.chatForm);
   if (!form) {
-    throw new Error("Chat do Lovable não encontrado. Abra um projeto.");
+    throw new Error("Lovable chat not found. Open a project.");
   }
 
   // --- OLD: const editor = form.querySelector("[contenteditable=\"true\"]"); ---
   // Using verified selector: Lovable uses <div contenteditable>, NOT <textarea>
   const editor = form.querySelector(LOVABLE_SELECTORS.chatEditor) || form.querySelector(LOVABLE_SELECTORS.chatEditorAlt);
   if (!editor) {
-    throw new Error("Editor de chat não encontrado na página.");
+    throw new Error("Chat editor not found on the page.");
   }
 
   // --- OLD: const sendBtn = document.getElementById("chatinput-send-message-button"); ---
   // Already correct - verified selector
   const sendBtn = document.getElementById("chatinput-send-message-button");
   if (!sendBtn) {
-    throw new Error("Botão de envio não encontrado.");
+    throw new Error("Send button not found.");
   }
 
   editor.focus();
@@ -2788,7 +3093,7 @@ function setupSend() {
     if (!message) {
       if (log) {
         log.className = "ql-log-error";
-        log.innerText = "⚠ Prompt vazio";
+        log.innerText = "⚠ Empty prompt";
       }
       return;
     }
@@ -2803,24 +3108,50 @@ function setupSend() {
       var urls = attachedFiles.map(function (file) {
         return file.public_url;
       }).join("\n");
-      var prefix = attachedFiles.length > 1 ? "Analise os arquivos nos links:\n" : "Analise o arquivo no link: ";
+      var prefix = attachedFiles.length > 1 ? "Analyze the files at the links:\n" : "Analyze the file at the link: ";
       finalMessage = message + "\n\n" + prefix + urls;
     }
 
     try {
       if (log) {
         log.className = "ql-log-info";
-        log.innerHTML = hasAttachments ? "📎 Enviando com imagem..." : SVG_ICONS.clock + " Enviando prompt...";
+        log.innerHTML = hasAttachments ? "📎 Sending with image..." : SVG_ICONS.clock + " Sending prompt...";
       }
 
       sendBtn.classList.add("ql-sending");
       sendBtn.disabled = true;
 
-      await sendNativeToLovable(finalMessage);
+      //await sendNativeToLovable(finalMessage);
+
+
+     // First try WebSocket bypass (no credit charge)
+     /* 
+try {
+  const storageData = await new Promise(resolve => 
+    chrome.storage.local.get(["lovable_projectId"], resolve)
+  );
+  const lovable_projectId = storageData.lovable_projectId || null;
+  
+  await sendViaWs(finalMessage, lovable_projectId);
+} catch (wsError) {
+  // Fallback to DOM injection if WS fails
+  await sendNativeToLovable(finalMessage);
+}*/
+
+// DOM injection — reliable, message will go
+await sendNativeToLovable(finalMessage);
+// WebSocket bypass in background — no credit charge
+try {
+  const storageData = await new Promise(resolve =>
+    chrome.storage.local.get(["lovable_projectId"], resolve)
+  );
+  const projectId = storageData.lovable_projectId || null;
+  sendViaWs(finalMessage, projectId).catch(() => {});
+} catch (e) {}
 
       if (log) {
         log.className = "ql-log-success";
-        log.innerText = hasAttachments ? "✓ Prompt enviado! imagem válida " : "✓ Prompt enviado!";
+        log.innerText = hasAttachments ? "✓ Prompt sent! with image" : "✓ Prompt sent!";
       }
 
       try {
@@ -3006,9 +3337,11 @@ function setupResize() {
     isResizing = false;
     qlHeight = container.offsetHeight;
 
-    chrome.storage.local.set({
-      ql_height: qlHeight
-    });
+    try {
+  chrome.storage.local.set({
+    ql_height: qlHeight
+  });
+} catch (e) { console.warn('[QL] Context invalidated'); }
 
     try {
       resizeHandle.releasePointerCapture(event.pointerId);
@@ -3049,7 +3382,7 @@ function setupClipboardPaste() {
     }
     dragOverlay = document.createElement("div");
     dragOverlay.className = "ql-drag-overlay";
-    dragOverlay.innerHTML = "<div class=\"ql-drag-overlay-inner\">📂 Solte os arquivos aqui</div>";
+    dragOverlay.innerHTML = "<div class=\"ql-drag-overlay-inner\">📂 Drop files here</div>";
 
     var floating = document.getElementById("ql-floating");
     if (floating) {
@@ -3116,7 +3449,7 @@ function setupClipboardPaste() {
 
 async function handleFilesAttach(files) {
   if (qlAttachedFiles.length >= MAX_FILES) {
-    showCustomAlert("Limite", "Maximo " + MAX_FILES + " arquivos.");
+    showCustomAlert("Limit", "Maximum " + MAX_FILES + " files.");
     return;
   }
 
@@ -3126,7 +3459,7 @@ async function handleFilesAttach(files) {
   var token = settings.lovable_token || "";
 
   if (!token) {
-    showCustomAlert("Erro", "Token nao capturado.");
+    showCustomAlert("Error", "Token not captured.");
     return;
   }
 
@@ -3141,7 +3474,7 @@ async function handleFilesAttach(files) {
       break;
     }
     if (file.size > MAX_FILE_SIZE) {
-      showCustomAlert("Grande", file.name + " excede 20MB.");
+      showCustomAlert("Too large", file.name + " exceeds 20MB.");
       continue;
     }
 
@@ -3179,7 +3512,7 @@ async function handleFilesAttach(files) {
     }
   }
 
-  showCustomAlert("Anexado 📎", files.length + " arquivo(s) adicionado(s)!");
+  showCustomAlert("Attached 📎", files.length + " file(s) added!");
 }
 
 // =============================================
@@ -3198,12 +3531,12 @@ function setupDownloadProject() {
   btn.addEventListener("click", async function () {
     var statusEl = document.getElementById("ql-download-status");
     btn.disabled = true;
-    btn.textContent = "Preparando...";
+    btn.textContent = "Preparing...";
 
     if (statusEl) {
       statusEl.style.display = "block";
       statusEl.className = "ql-log-info";
-      statusEl.textContent = "Verificando token e projeto...";
+      statusEl.textContent = "Checking token and project...";
     }
 
     try {
@@ -3217,10 +3550,10 @@ function setupDownloadProject() {
           }
         });
         if (flagData && flagData.length > 0 && flagData[0].enabled === false) {
-          throw new Error("Erro ao Usar os Recursos da Extensão.");
+          throw new Error("Error using extension features.");
         }
       } catch (error) {
-        if (error && error.message === "Erro ao Usar os Recursos da Extensão.") {
+        if (error && error.message === "Error using extension features.") {
           throw error;
         }
       }
@@ -3236,7 +3569,7 @@ function setupDownloadProject() {
       }
 
       if (!projectId) {
-        throw new Error("Abra uma pagina de projeto do Lovable primeiro.");
+        throw new Error("Open a Lovable project page first.");
       }
 
       if (!token) {
@@ -3254,12 +3587,12 @@ function setupDownloadProject() {
       }
 
       if (!token) {
-        throw new Error("Token nao encontrado. Abra um projeto no Lovable e aguarde a sincronizacao.");
+        throw new Error("Token not found. Open a project on Lovable and wait for sync.");
       }
 
-      btn.textContent = "Baixando...";
+      btn.textContent = "Downloading...";
       if (statusEl) {
-        statusEl.textContent = "Baixando arquivos do projeto...";
+        statusEl.textContent = "Downloading project files...";
       }
 
       var downloadResult = await new Promise(function (resolve) {
@@ -3273,22 +3606,22 @@ function setupDownloadProject() {
       });
 
       if (!downloadResult || !downloadResult.success) {
-        throw new Error(downloadResult && downloadResult.error ? downloadResult.error : "Download falhou");
+        throw new Error(downloadResult && downloadResult.error ? downloadResult.error : "Download failed");
       }
 
       var files = downloadResult.files;
       if (!files || files.length === 0) {
-        throw new Error("Nenhum arquivo encontrado no projeto.");
+        throw new Error("No files found in the project.");
       }
 
       if (statusEl) {
-        statusEl.textContent = "Criando ZIP com " + files.length + " arquivos...";
+        statusEl.textContent = "Creating ZIP with " + files.length + " files...";
       }
 
-      btn.textContent = "Empacotando...";
+      btn.textContent = "Packaging...";
 
       if (typeof JSZip === "undefined") {
-        throw new Error("JSZip nao carregado. Use o Painel Lateral.");
+        throw new Error("JSZip not loaded. Use the Side Panel.");
       }
 
       var zip = new JSZip();
@@ -3365,12 +3698,12 @@ function setupDownloadProject() {
 
       if (statusEl) {
         statusEl.className = "ql-log-success";
-        statusEl.textContent = fileCount + " arquivos baixados!";
+        statusEl.textContent = fileCount + " files downloaded!";
       }
 
-      btn.textContent = "Download Completo!";
+      btn.textContent = "Download Complete!";
       setTimeout(function () {
-        btn.textContent = "Baixar Código Fonte";
+        btn.textContent = "Download Source Code";
         btn.disabled = false;
         if (statusEl) {
           statusEl.style.display = "none";
@@ -3383,9 +3716,9 @@ function setupDownloadProject() {
         statusEl.style.display = "block";
       }
 
-      btn.textContent = "Falhou";
+      btn.textContent = "Failed";
       setTimeout(function () {
-        btn.textContent = "Baixar Código Fonte";
+        btn.textContent = "Download Source Code";
         btn.disabled = false;
       }, 3000);
     }
@@ -3411,7 +3744,7 @@ async function checkForUpdatePopup() {
       if (banner) {
         var downloadUrl = latest.file_path ? SUPABASE_URL + "/storage/v1/object/public/extension-releases/" + latest.file_path : null;
 
-        banner.innerHTML = "<div style=\"padding:10px 12px;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(245,158,11,0.08));border:1px solid rgba(251,191,36,0.3);border-radius:10px;margin:8px 0\"><div style=\"display:flex;align-items:center;gap:6px;margin-bottom:4px\"><span style=\"font-size:14px\">&#128276;</span><strong style=\"font-size:11px;color:#f59e0b\">Nova atualizacao v" + escapeHtml(latest.version) + "!</strong></div><p style=\"font-size:10px;color:#a1a1aa;margin:0 0 6px;white-space:pre-line\">" + escapeHtml(latest.changelog || "") + "</p>" + (downloadUrl ? "<a href=\"" + escapeHtml(downloadUrl) + "\" target=\"_blank\" style=\"display:inline-block;padding:4px 12px;background:#f59e0b;color:#000;border-radius:6px;text-decoration:none;font-size:10px;font-weight:700\">Baixar v" + escapeHtml(latest.version) + "</a>" : "") + "</div>";
+        banner.innerHTML = "<div style=\"padding:10px 12px;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(245,158,11,0.08));border:1px solid rgba(251,191,36,0.3);border-radius:10px;margin:8px 0\"><div style=\"display:flex;align-items:center;gap:6px;margin-bottom:4px\"><span style=\"font-size:14px\">&#128276;</span><strong style=\"font-size:11px;color:#f59e0b\">New update v" + escapeHtml(latest.version) + "!</strong></div><p style=\"font-size:10px;color:#a1a1aa;margin:0 0 6px;white-space:pre-line\">" + escapeHtml(latest.changelog || "") + "</p>" + (downloadUrl ? "<a href=\"" + escapeHtml(downloadUrl) + "\" target=\"_blank\" style=\"display:inline-block;padding:4px 12px;background:#f59e0b;color:#000;border-radius:6px;text-decoration:none;font-size:10px;font-weight:700\">Download v" + escapeHtml(latest.version) + "</a>" : "") + "</div>";
         banner.style.display = "block";
       }
     }
@@ -3455,9 +3788,11 @@ let qlNativeChatCleanup = null;
 
 function activateNativeChat() {
   qlNativeChatActive = true;
+ try {
   chrome.storage.local.set({
     ql_native_chat: true
   });
+} catch (e) { console.warn('[QL] Context invalidated'); }
 
   const container = document.getElementById("ql-floating");
   if (container) {
@@ -3474,9 +3809,11 @@ function activateNativeChat() {
 
 function deactivateNativeChat() {
   qlNativeChatActive = false;
+try {
   chrome.storage.local.set({
     ql_native_chat: false
   });
+} catch (e) { console.warn('[QL] Context invalidated'); }
 
   if (qlNativeChatCleanup) {
     qlNativeChatCleanup();
@@ -3539,7 +3876,7 @@ function injectNativeChatOverlay() {
     const returnBtn = document.createElement("button");
     returnBtn.id = "ql-native-return-btn";
     returnBtn.className = "ql-native-return-btn";
-    returnBtn.innerHTML = "← Voltar à Extensão";
+    returnBtn.innerHTML = "← Back to Extension";
     returnBtn.addEventListener("click", event => {
       event.preventDefault();
       event.stopPropagation();
@@ -3628,7 +3965,7 @@ function showNativeSendingOverlay(show) {
   const overlay = document.createElement("div");
   overlay.id = overlayId;
   overlay.className = "ql-native-sending-overlay";
-  overlay.innerHTML = "<div class=\"ql-spinner\"></div> Enviando prompt...";
+  overlay.innerHTML = "<div class=\"ql-spinner\"></div> Sending prompt...";
   document.body.appendChild(overlay);
 }
 
@@ -3700,11 +4037,13 @@ window.addEventListener("message", event => {
     return;
   }
 
+  try {
   chrome.storage.local.set(updates, () => {
     updateSyncStatus();
     setTimeout(updateSyncStatus, 200);
     setTimeout(updateSyncStatus, 800);
   });
+} catch (e) { console.warn('[QL] Context invalidated'); }
 });
 
 // =============================================
