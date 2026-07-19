@@ -44,8 +44,8 @@
 
   // Vercel API endpoints (your dough-sync-api)
   const SP_API_BASE = "https://dough-sync-api.vercel.app/api";
-  // const SP_VALIDATE_URL = SP_API_BASE + "/session-start";
-   const SP_SESSION_START_URL = SP_API_BASE + "/session-start";
+  const SP_VALIDATE_URL = SP_API_BASE + "/session-start";
+  const SP_SESSION_START_URL = SP_API_BASE + "/session-start";
   const SP_HEARTBEAT_URL = SP_API_BASE + "/heartbeat";
   const SP_SESSION_END_URL = SP_API_BASE + "/session-end";
 
@@ -61,8 +61,8 @@
   const SP_LICENSES_URL = SP_SUPABASE_URL + "/rest/v1/licenses";
   const SP_FEATURE_FLAGS_URL = SP_SUPABASE_URL + "/rest/v1/feature_flags";
   const SP_STORAGE_UPLOAD_URL = SP_SUPABASE_URL + "/storage/v1/object/prompt-images/";
-  const SP_STORAGE_PUBLIC_URL = SP_SUPABASE_URL + "/storage/v1/object/public/uploads/";
-  
+  const SP_STORAGE_PUBLIC_URL = SP_SUPABASE_URL + "/storage/v1/object/public/prompt-images/";
+
   // =============================================
   // CONSTANTS
   // =============================================
