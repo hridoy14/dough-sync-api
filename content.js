@@ -951,17 +951,17 @@ async function validateLicense() {
       qlDeviceId = await getDeviceId();
     }
 
-    const response = await fetch(SESSION_START_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + SUPABASE_ANON_KEY
-      },
-      body: JSON.stringify({
-        license_key: key,
-        device_id: qlDeviceId
-      })
-    });
+    const data = await bgFetch(VALIDATE_URL, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: "Bearer " + SUPABASE_ANON_KEY
+  },
+  body: JSON.stringify({
+    license_key: key,
+    device_id: qlDeviceId
+  })
+});
 
     const data = await response.json();
 
