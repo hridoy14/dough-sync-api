@@ -498,11 +498,10 @@ function spTemplateChatBubble(message) {
 // ============================================================
 // Renders the full chat history with date dividers.
 
-/**
+/*
  * Returns HTML for the complete chat history view.
  * Groups messages by date with dividers.
  * @param {Array} messages - Array of message objects
- * 
  * @returns {string} - Chat history HTML
  */
 /*
@@ -540,6 +539,7 @@ function spTemplateChatHistory(messages) {
 
   return html;
 }
+*/
 /**
  * Returns HTML for a single chat message bubble (10/10 Pro UI).
  * @param {Object} message - Message object with text, status, timestamp
@@ -574,7 +574,6 @@ function spTemplateChatBubble(message) {
   );
 }
 
-*/
 // ============================================================
 // SECTION 18: MAIN UI TEMPLATE
 // ============================================================
