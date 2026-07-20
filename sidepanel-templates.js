@@ -686,12 +686,13 @@ function spTemplateMainUI(userName, statusBadge) {
 // and spRenderPromptContent().
 // Extracted from inline code in sidepanel.js for reusability.
 
-/**
+/*
  * Returns HTML for the prompt tab content area.
  * Contains textarea, attach preview, action bar, shortcuts grid.
  * Called by spRenderPromptContent() in sidepanel.js.
  * @returns {string} - Prompt content HTML
  */
+/*
 function spTemplatePromptContent() {
   return (
     '<textarea class="sp-textarea" id="sp-msg" rows="3" placeholder="Type your command..." spellcheck="false"></textarea>' +
@@ -710,14 +711,80 @@ function spTemplatePromptContent() {
         '<button class="sp-tool-btn" id="sp-speech" title="' + t("btn.speech.short") + '">' + SP_SVG.mic + '</button>' +
         '<button class="sp-send-btn" id="sp-send">' + t("btn.send") + '</button>' +
       '</div>' +
+    '</div>' +*/
+    //'<input type="file" id="sp-file-input" multiple style="display:none" accept="*/*">' +
+    //'<div class="sp-log" id="sp-log"></div>' +
+   // '<span class="sp-shortcuts-title">' + t("shortcuts.title") + '</span>' +
+   // '<div class="sp-shortcuts-grid" id="sp-chips"></div>'
+ // );
+//}
+/**
+ * Returns HTML for the prompt tab content area (10/10 Pro UI with Popover + Vector Mic).
+ * @returns {string} - Prompt content HTML
+ */
+function spTemplatePromptContent() {
+  return (
+    '<div class="sp-chat-container">' +
+      '<textarea class="sp-textarea sp-chat-textarea" id="sp-msg" rows="3" placeholder="' + t("prompt.placeholder") + '" spellcheck="false"></textarea>' +
+      '<div id="sp-attach-preview" class="sp-attach-preview" style="display:none"></div>' +
+
+      '<div class="sp-chat-toolbar">' +
+        // Left: Plus Icon (+) Action Menu Trigger
+        '<div class="sp-toolbar-left">' +
+          '<div class="sp-plus-btn-group">' +
+            '<button class="sp-plus-btn" id="sp-plus-trigger" title="Tools & Actions">+</button>' +
+            '<span class="sp-plus-tooltip">Tools & Actions</span>' +
+          '</div>' +
+        '</div>' +
+
+        // Right Controls: Plan Switch, AI Sparkles, Vector Mic, Send Button
+        '<div class="sp-toolbar-right">' +
+          '<div class="sp-plan-pill">' +
+            '<span>Plan</span>' +
+            '<label class="sp-switch">' +
+              '<input type="checkbox" id="sp-modo-plano">' +
+              '<span class="sp-slider"></span>' +
+            '</label>' +
+          '</div>' +
+
+          '<button class="sp-tool-btn" id="sp-optimize" title="AI Optimize">' + SP_SVG.openai + '</button>' +
+
+          // Professional Lovable Vector Microphone SVG Icon
+          '<button class="sp-tool-btn" id="sp-speech" title="Voice Input">' +
+            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+              '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>' +
+              '<path d="M19 10v2a7 7 0 0 1-14 0v-2"/>' +
+              '<line x1="12" y1="19" x2="12" y2="22"/>' +
+              '<line x1="8" y1="22" x2="16" y2="22"/>' +
+            '</svg>' +
+          '</button>' +
+
+          '<button class="sp-send-btn" id="sp-send">' +
+            '<span>' + t("btn.send") + '</span>' +
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+
+      // Lovable Action Popover Menu (Triggered by + icon)
+      '<div class="sp-menu-popover" id="sp-popover-menu" style="display:none;">' +
+        '<button id="sp-shield-btn" class="sp-menu-item">🛡️ <span id="sp-shield-label">' + t("btn.shield.on") + '</span></button>' +
+        '<button id="sp-native-chat-btn" class="sp-menu-item">💬 <span id="sp-native-chat-label">' + t("btn.nativeChat") + '</span></button>' +
+        '<button id="sp-download-project" class="sp-menu-item">📥 <span>' + t("btn.download") + '</span></button>' +
+        '<button id="sp-remove-watermark" class="sp-menu-item">🚫 <span>' + t("btn.watermark") + '</span></button>' +
+        '<div class="sp-menu-divider"></div>' +
+        '<button id="sp-quick-init" class="sp-menu-item">🚀 <span>Create New Project</span></button>' +
+        '<button id="sp-attach-btn" class="sp-menu-item">📎 <span>' + t("btn.attach.short") + '</span></button>' +
+      '</div>' +
     '</div>' +
+
     '<input type="file" id="sp-file-input" multiple style="display:none" accept="*/*">' +
     '<div class="sp-log" id="sp-log"></div>' +
     '<span class="sp-shortcuts-title">' + t("shortcuts.title") + '</span>' +
-    '<div class="sp-shortcuts-grid" id="sp-chips"></div>'
+    '<div class="sp-shortcuts-grid" id="sp-chips"></div>' +
+    '<div id="sp-download-status" class="sp-log" style="display:none"></div>'
   );
 }
-
 // ============================================================
 // END OF FILE — sidepanel-templates.js
 // All original functions preserved. No code deleted.
