@@ -1883,3 +1883,18 @@ body {
   max-height: 24px !important;
   object-fit: contain;
 }
+/* ============================================= */
+/* PUSH CHAT INPUT BOX TO ABSOLUTE BOTTOM        */
+/* ============================================= */
+
+#sp-tab-content {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+}
+
+.sp-chat-container {
+  margin-top: auto !important;
+}
