@@ -721,6 +721,8 @@ function spTemplatePromptContent() {
 //}
 /**
  * Returns HTML for the prompt tab content area (10/10 Pro UI with Popover + Vector Mic).
+ /**
+ * Returns HTML for the prompt tab content area (10/10 Pro Editor UI - Clean Bottom).
  * @returns {string} - Prompt content HTML
  */
 function spTemplatePromptContent() {
@@ -730,11 +732,17 @@ function spTemplatePromptContent() {
       '<div id="sp-attach-preview" class="sp-attach-preview" style="display:none"></div>' +
 
       '<div class="sp-chat-toolbar">' +
-        // Left: Plus Icon (+) Action Menu Trigger
+        // Left: Plus (+) Tools Icon & Flash (⚡) Shortcuts Icon
         '<div class="sp-toolbar-left">' +
           '<div class="sp-plus-btn-group">' +
-            '<button class="sp-plus-btn" id="sp-plus-trigger" title="Tools & Actions">+</button>' +
+            '<button class="sp-plus-btn" id="sp-plus-trigger" type="button" title="Tools & Actions">+</button>' +
             '<span class="sp-plus-tooltip">Tools & Actions</span>' +
+          '</div>' +
+
+          // ⚡ New Quick Shortcuts Icon Trigger
+          '<div class="sp-plus-btn-group">' +
+            '<button class="sp-plus-btn" id="sp-shortcuts-trigger" type="button" title="Quick Shortcuts">⚡</button>' +
+            '<span class="sp-plus-tooltip">Quick Shortcuts</span>' +
           '</div>' +
         '</div>' +
 
@@ -748,10 +756,9 @@ function spTemplatePromptContent() {
             '</label>' +
           '</div>' +
 
-          '<button class="sp-tool-btn" id="sp-optimize" title="AI Optimize">' + SP_SVG.openai + '</button>' +
+          '<button class="sp-tool-btn" id="sp-optimize" type="button" title="AI Optimize">' + SP_SVG.openai + '</button>' +
 
-          // Professional Lovable Vector Microphone SVG Icon
-          '<button class="sp-tool-btn" id="sp-speech" title="Voice Input">' +
+          '<button class="sp-tool-btn" id="sp-speech" type="button" title="Voice Input">' +
             '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
               '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>' +
               '<path d="M19 10v2a7 7 0 0 1-14 0v-2"/>' +
@@ -760,29 +767,32 @@ function spTemplatePromptContent() {
             '</svg>' +
           '</button>' +
 
-          '<button class="sp-send-btn" id="sp-send">' +
+          '<button class="sp-send-btn" id="sp-send" type="button">' +
             '<span>' + t("btn.send") + '</span>' +
             '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
           '</button>' +
         '</div>' +
       '</div>' +
 
-      // Lovable Action Popover Menu (Triggered by + icon)
+      // POPUP 1: Actions Menu (Triggered by + Icon)
       '<div class="sp-menu-popover" id="sp-popover-menu" style="display:none;">' +
-        '<button id="sp-shield-btn" class="sp-menu-item">🛡️ <span id="sp-shield-label">' + t("btn.shield.on") + '</span></button>' +
-        '<button id="sp-native-chat-btn" class="sp-menu-item">💬 <span id="sp-native-chat-label">' + t("btn.nativeChat") + '</span></button>' +
-        '<button id="sp-download-project" class="sp-menu-item">📥 <span>' + t("btn.download") + '</span></button>' +
-        '<button id="sp-remove-watermark" class="sp-menu-item">🚫 <span>' + t("btn.watermark") + '</span></button>' +
+        '<button id="sp-shield-btn" type="button" class="sp-menu-item">🛡️ <span id="sp-shield-label">' + t("btn.shield.on") + '</span></button>' +
+        '<button id="sp-native-chat-btn" type="button" class="sp-menu-item">💬 <span id="sp-native-chat-label">' + t("btn.nativeChat") + '</span></button>' +
+        '<button id="sp-download-project" type="button" class="sp-menu-item">📥 <span>' + t("btn.download") + '</span></button>' +
+        '<button id="sp-remove-watermark" type="button" class="sp-menu-item">🚫 <span>' + t("btn.watermark") + '</span></button>' +
         '<div class="sp-menu-divider"></div>' +
-        '<button id="sp-quick-init" class="sp-menu-item">🚀 <span>Create New Project</span></button>' +
-        '<button id="sp-attach-btn" class="sp-menu-item">📎 <span>' + t("btn.attach.short") + '</span></button>' +
+        '<button id="sp-quick-init" type="button" class="sp-menu-item">🚀 <span>Create New Project</span></button>' +
+        '<button id="sp-attach-btn" type="button" class="sp-menu-item">📎 <span>' + t("btn.attach.short") + '</span></button>' +
+      '</div>' +
+
+      // POPUP 2: Quick Shortcuts Menu (Triggered by ⚡ Icon)
+      '<div class="sp-menu-popover" id="sp-shortcuts-popover-menu" style="display:none; left:48px;">' +
+        '<div class="sp-shortcuts-grid" id="sp-chips"></div>' +
       '</div>' +
     '</div>' +
 
     '<input type="file" id="sp-file-input" multiple style="display:none" accept="*/*">' +
     '<div class="sp-log" id="sp-log"></div>' +
-    '<span class="sp-shortcuts-title">' + t("shortcuts.title") + '</span>' +
-    '<div class="sp-shortcuts-grid" id="sp-chips"></div>' +
     '<div id="sp-download-status" class="sp-log" style="display:none"></div>'
   );
 }
