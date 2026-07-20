@@ -68,7 +68,7 @@ const LOVABLE_SELECTORS = {
 // Primary: _lovable-session-id-v2 (Firebase JWT)
 // Secondary: lovable-auth (API token)
 const LOVABLE_COOKIE_NAMES = {
-  primary: "_lovable-session-id-v2",
+  primary: "lovable-session-id-v2",  //_lovable-session-id-v2
   secondary: "lovable-auth",
   refresh: "lovable-session-id.refresh",
   signature: "lovable-session-id.sig"
