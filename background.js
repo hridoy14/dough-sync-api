@@ -205,6 +205,11 @@ function readLovableCookies(sendResponse) {
     "lovable-session-id.id",
     "lovable-session-id.custom",
     "lovable-session-id.refresh",
+    "lovable-session-id.sig",
+    //new add
+    "lovable-session-id-v2",
+    "lovable-auth",
+    "lovable-session-id.refresh",
     "lovable-session-id.sig"
   ];
   let tokens = [];
@@ -235,9 +240,10 @@ function getAllLovableCookies(sendResponse) {
   });
 }
 
+// https://lovable-api.com/projects/${msg.projectId}/source-code
 async function handleDownloadProject(msg, sendResponse) {
   try {
-    const url = `https://lovable-api.com/projects/${msg.projectId}/source-code`;
+    const url = `https://api.lovable.dev/projects/${msg.projectId}/git/files?ref=main`;
     const res = await fetch(url, {
       method: "GET",
       headers: {
