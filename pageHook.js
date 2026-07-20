@@ -344,7 +344,23 @@
           }
         } catch (error) {}
 
-        return originalFetch.apply(this, args);
+       // return originalFetch.apply(this, args);
+       //new add
+       window.fetch = async function (...args) {
+  const url = typeof args[0] === "string" ? args[0] : (args[0] && args[0].url) || "";
+  
+  // Sandbox dev-server polling 404 handling
+  if (url.includes("/_sandbox/dev-server")) {
+    try {
+      const response = await originalFetch.apply(this, args);
+      return response;
+    } catch (err) {
+      return new Response(JSON.stringify({ status: "offline" }), { status: 200 });
+    }
+  }
+
+  return originalFetch.apply(this, args);
+};
       };
     } catch (error) {
       console.warn("[MasterLovableHook] erro fetch", error);
