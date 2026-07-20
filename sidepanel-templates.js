@@ -545,6 +545,7 @@ function spTemplateChatHistory(messages) {
  * Returns HTML for a single chat message bubble (10/10 Pro UI).
  * @param {Object} message - Message object with text, status, timestamp
  * @returns {string} - Chat bubble HTML
+ * @param {Array} messages - Array of message objects
  */
 function spTemplateChatBubble(message) {
   var isAi = message.isAi || message.role === "ai" || message.role === "assistant";
