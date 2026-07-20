@@ -1542,3 +1542,180 @@ body {
   background: linear-gradient(135deg, #d946ef, #7c3aed 55%, #67e8f9) !important;
   box-shadow: 0 14px 36px rgba(37, 99, 235, .28), 0 0 24px rgba(34, 211, 238, .16);
 }
+
+
+
+/*new add*/
+/* ============================================= */
+/* 10/10 PRO UI NEW COMPONENT STYLES             */
+/* ============================================= */
+
+/* Chat Container */
+.sp-chat-container {
+  background: #141419 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 14px !important;
+  padding: 10px 12px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.sp-chat-textarea {
+  width: 100%;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: #f8fafc !important;
+  font-size: 12.5px !important;
+  resize: none;
+  height: 48px;
+}
+
+.sp-chat-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sp-toolbar-left, .sp-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Plus Button & Hover Tooltip */
+.sp-plus-btn-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.sp-plus-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sp-plus-btn:hover {
+  background: #6366f1;
+  color: #fff;
+}
+
+.sp-plus-tooltip {
+  position: absolute;
+  left: 36px;
+  background: #27272a;
+  color: #cbd5e1;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 5px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.sp-plus-btn:hover + .sp-plus-tooltip {
+  opacity: 1;
+}
+
+/* Popover Action Menu */
+.sp-menu-popover {
+  position: absolute;
+  bottom: 50px;
+  left: 10px;
+  width: 220px;
+  background: rgba(24, 24, 30, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 1000;
+}
+
+.sp-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #e2e8f0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.sp-menu-item:hover {
+  background: rgba(99, 102, 241, 0.2);
+  color: #fff;
+}
+
+.sp-menu-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 3px 0;
+}
+
+/* Live Chat Conversation Feed */
+.sp-msg-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.sp-msg-user .sp-msg-bubble {
+  background: #1e1e24;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: #f8fafc;
+  border-radius: 12px 12px 2px 12px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.sp-msg-ai .sp-msg-bubble {
+  background: rgba(168, 85, 247, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.22);
+  color: #e2e8f0;
+  border-radius: 12px 12px 12px 2px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
+.sp-files-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.sp-file-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 5px;
+  font-size: 10px;
+  font-family: monospace;
+  color: #38bdf8;
+}
