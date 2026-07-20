@@ -202,15 +202,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 function readLovableCookies(sendResponse) {
   const cookieNames = [
-    "lovable-session-id.id",
+    //"lovable-session-id.id",
     "lovable-session-id.custom",
-    "lovable-session-id.refresh",
+   // "lovable-session-id.refresh",
     "lovable-session-id.sig",
     //new add
     "lovable-session-id-v2",
     "lovable-auth",
     "lovable-session-id.refresh",
-    "lovable-session-id.sig"
+    //"lovable-session-id.sig"
   ];
   let tokens = [];
   let completed = 0;
