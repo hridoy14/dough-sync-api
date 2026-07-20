@@ -599,7 +599,7 @@
         statusBadge +
         "</div>" +
         //SP_SVG.clock + t("sync.waiting") +
-        "<div class=\"sp-sync-status\" id=\"sp-sync\">" + SP_SVG.clock + t("sync.waiting") + "</div>" 
+        "<div class=\"sp-sync-status\" id=\"sp-sync\">" + SP_SVG.clock + t("sync.waiting") + "</div>" +
         "</div>" +
         spTemplateTabs(spActiveTab, spChatHistory.length) +
         "<div id=\"sp-tab-content\"></div>";
