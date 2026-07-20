@@ -617,9 +617,25 @@
       } else {
         spRenderPromptContent();
       }
-
+      /*
       // Sync status
       spUpdateSyncStatus();
+      chrome.storage.onChanged.addListener(changes => {
+        if (changes.lovable_projectId || changes.lovable_token) {
+          spUpdateSyncStatus();
+        }
+      });
+*/
+      // Sync status & Active Token Request
+      spUpdateSyncStatus();
+      
+      // সাইডপ্যানেল ওপেন হলে সাথে সাথে অ্যাক্টিভ ট্যাবে টোকেন রিকোয়েস্ট পাঠাবে
+      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+        if (tabs[0] && tabs[0].id) {
+          chrome.tabs.sendMessage(tabs[0].id, { action: "qlRequestToken" }).catch(() => {});
+        }
+      });
+
       chrome.storage.onChanged.addListener(changes => {
         if (changes.lovable_projectId || changes.lovable_token) {
           spUpdateSyncStatus();
