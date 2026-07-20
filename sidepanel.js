@@ -769,22 +769,43 @@
     // templates.js থেকে নতুন ১০/১০ পপআপ মেনু ওয়ালা ডিজাইন লোড করা
     content.innerHTML = spTemplatePromptContent();
 
-    // Plus (+) Button Click Event to Toggle Popover Menu
+        // 1. Plus (+) Tools Popover Toggle
     const plusBtn = document.getElementById("sp-plus-trigger");
     const popoverMenu = document.getElementById("sp-popover-menu");
+    
+    // 2. Flash (⚡) Shortcuts Popover Toggle
+    const shortcutsBtn = document.getElementById("sp-shortcuts-trigger");
+    const shortcutsMenu = document.getElementById("sp-shortcuts-popover-menu");
 
     if (plusBtn && popoverMenu) {
       plusBtn.addEventListener("click", (event) => {
         event.stopPropagation();
+        if (shortcutsMenu) shortcutsMenu.style.display = "none";
         const isOpen = popoverMenu.style.display !== "none";
         popoverMenu.style.display = isOpen ? "none" : "flex";
       });
+    }
+
+    if (shortcutsBtn && shortcutsMenu) {
+      shortcutsBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (popoverMenu) popoverMenu.style.display = "none";
+        const isOpen = shortcutsMenu.style.display !== "none";
+        shortcutsMenu.style.display = isOpen ? "none" : "flex";
+      });
+    }
+
+    // স্ক্রিনের যেকোনো জায়গায় ক্লিক করলে দুইটা মেনুই বন্ধ হবে
+    document.addEventListener("click", () => {
+      if (popoverMenu) popoverMenu.style.display = "none";
+      if (shortcutsMenu) shortcutsMenu.style.display = "none";
+    });
 
       // স্ক্রিনের অন্য কোথাও ক্লিক করলে মেনু অটো বন্ধ হওয়া
       document.addEventListener("click", () => {
         popoverMenu.style.display = "none";
       });
-    }
+    
 
     // Render chips (quick actions)
     const chipsContainer = document.getElementById("sp-chips");
