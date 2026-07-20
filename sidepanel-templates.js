@@ -502,8 +502,10 @@ function spTemplateChatBubble(message) {
  * Returns HTML for the complete chat history view.
  * Groups messages by date with dividers.
  * @param {Array} messages - Array of message objects
+ * 
  * @returns {string} - Chat history HTML
  */
+/*
 function spTemplateChatHistory(messages) {
   if (!messages || !messages.length) {
     return spTemplateChatEmpty();
@@ -538,7 +540,41 @@ function spTemplateChatHistory(messages) {
 
   return html;
 }
+/**
+ * Returns HTML for a single chat message bubble (10/10 Pro UI).
+ * @param {Object} message - Message object with text, status, timestamp
+ * @returns {string} - Chat bubble HTML
+ */
+function spTemplateChatBubble(message) {
+  var isAi = message.isAi || message.role === "ai" || message.role === "assistant";
+  var timeStr = spFormatChatTime(message.timestamp);
 
+  if (isAi) {
+    return (
+      '<div class="sp-msg-wrapper sp-msg-ai">' +
+        '<div class="sp-msg-header">✨ Lovable AI</div>' +
+        '<div class="sp-msg-bubble">' +
+          spEscapeHtml(message.text) +
+          (message.modifiedFiles ? 
+            '<div class="sp-files-list">' +
+              '<div class="sp-file-pill modified"><span>✏️</span> <span>' + spEscapeHtml(message.modifiedFiles) + '</span></div>' +
+            '</div>' : ''
+          ) +
+        '</div>' +
+        '<div class="sp-msg-meta">' + timeStr + ' · Applied</div>' +
+      '</div>'
+    );
+  }
+
+  return (
+    '<div class="sp-msg-wrapper sp-msg-user">' +
+      '<div class="sp-msg-bubble">' + spEscapeHtml(message.text) + '</div>' +
+      '<div class="sp-msg-meta">' + timeStr + '</div>' +
+    '</div>'
+  );
+}
+
+*/
 // ============================================================
 // SECTION 18: MAIN UI TEMPLATE
 // ============================================================
