@@ -3669,7 +3669,10 @@ function setupDownloadProject() {
           // });
           // --- NEW VERIFIED ENDPOINT: /git/file?path=&ref= ---
           try {
-            var rawResponse = await fetch("https://api.lovable.dev/projects/" + projectId + "/git/file?path=" + encodeURIComponent(file.name) + "&ref=main", {
+           // var rawResponse = await fetch("https://api.lovable.dev/projects/" + projectId + "/git/file?path=" + encodeURIComponent(file.name) + "&ref=main", 
+           const currentRef = ref || "main";
+            var rawResponse = await fetch("https://api.lovable.dev/projects/" + projectId + "/git/file?path=" + encodeURIComponent(file.name) + "&ref=" + currentRef, 
+            {
               method: "GET",
               headers: {
                 Authorization: "Bearer " + token,
