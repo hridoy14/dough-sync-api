@@ -44,6 +44,47 @@ function extractProjectId(url) {
   return match ? match[1] : null;
 }
 
+// hellper header function 
+async function fetchProjectFiles(projectId, token, ref = "main") {  
+  const cleanToken = String(token || "")  
+    .replace(/^Bearer\s+/i, "")  
+    .trim();  
+  
+  if (!projectId) {  
+    throw new Error("Project ID is required");  
+  }  
+  
+  if (!cleanToken) {  
+    throw new Error("Lovable token is required");  
+  }  
+  
+  // URL টি সঠিকভাবে সংশোধন করা হয়েছে
+  const url = "https://api.lovable.dev/projects/" +  
+    encodeURIComponent(projectId) +  
+    "/git/files?ref=" +  
+    encodeURIComponent(ref);
+
+  const response = await fetch(url, {  
+    method: "GET",  
+    headers: {  
+      "Authorization": "Bearer " + cleanToken,  
+      "Accept": "application/json"  
+    },  
+    credentials: "include"  
+  });  
+  
+  if (!response.ok) {  
+    throw new Error(  
+      "Failed to fetch project files: " +  
+      response.status +  
+      " " +  
+      response.statusText  
+    );  
+  }  
+  
+  return await response.json();  
+}
+
 // Extract token from WebSocket URL query param (?token=JWT)
 function extractTokenFromWsUrl(url) {
   try {
