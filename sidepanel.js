@@ -2146,3 +2146,19 @@
   })();
 
 })();
+    // Plus (+) Button Click Event to Toggle Popover Menu
+    const plusBtn = document.getElementById("sp-plus-trigger");
+    const popoverMenu = document.getElementById("sp-popover-menu");
+
+    if (plusBtn && popoverMenu) {
+      plusBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const isOpen = popoverMenu.style.display !== "none";
+        popoverMenu.style.display = isOpen ? "none" : "flex";
+      });
+
+      // স্ক্রিনের অন্য কোথাও ক্লিক করলে মেনু অটো বন্ধ হবে
+      document.addEventListener("click", () => {
+        popoverMenu.style.display = "none";
+      });
+    }
