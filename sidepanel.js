@@ -1731,7 +1731,7 @@
           )) {
             try {
               const rawResponse = await fetch(
-                "https://api.lovable.dev/projects/" + projectId + "/files/raw?path=" + encodeURIComponent(file.name),
+                "https://api.lovable.dev/projects/" + projectId + "/files/raw?path=" + encodeURIComponent(file.name) + "&ref=main",
                 {
                   method: "GET",
                   headers: { Authorization: "Bearer " + token, Accept: "*/*" },
