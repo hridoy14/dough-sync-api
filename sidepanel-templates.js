@@ -540,6 +540,7 @@ function spTemplateChatHistory(messages) {
   return html;
 }
 */
+//new add
 /**
  * Returns HTML for a single chat message bubble (10/10 Pro UI).
  * @param {Object} message - Message object with text, status, timestamp
@@ -581,12 +582,13 @@ function spTemplateChatBubble(message) {
 // Contains: profile card, textarea, action bar, shortcuts, etc.
 // All text in English (was Brazilian Portuguese).
 
-/**
+/*
  * Returns HTML for the main side panel UI after login.
  * @param {string} userName - Display name of the user
  * @param {string} statusBadge - HTML badge from spTemplateStatusBadge()
  * @returns {string} - Main UI HTML
  */
+/*
 function spTemplateMainUI(userName, statusBadge) {
   return (
     '<div id="sp-update-banner" style="display:none"></div>' +
@@ -629,25 +631,53 @@ function spTemplateMainUI(userName, statusBadge) {
       '</div>' +
       '<button class="sp-send-btn" id="sp-send">Send</button>' +
     '</div>' +
-
+*/
     // Hidden file input for attachment
-    '<input type="file" id="sp-file-input" multiple style="display:none" accept="*/*">' +
+    // '<input type="file" id="sp-file-input" multiple style="display:none" accept="*/*">' + 
 
     // Log/status area
-    '<div class="sp-log" id="sp-log"></div>' +
+    // '<div class="sp-log" id="sp-log"></div>' +
 
     // Quick shortcuts section
-    '<span class="sp-shortcuts-title">QUICK SHORTCUTS</span>' +
-    '<div class="sp-shortcuts-grid" id="sp-chips"></div>' +
+   // '<span class="sp-shortcuts-title">QUICK SHORTCUTS</span>' +
+    //'<div class="sp-shortcuts-grid" id="sp-chips"></div>' +
 
     // Watermark removal button
-    '<button id="sp-remove-watermark" class="sp-watermark-btn" data-i18n="btn.watermark">' + t("btn.watermark") + '</button>' +
+   // '<button id="sp-remove-watermark" class="sp-watermark-btn" data-i18n="btn.watermark">' + t("btn.watermark") + '</button>' +
 
     // Download status area
-    '<div id="sp-download-status" class="sp-log" style="display:none"></div>'
+   // '<div id="sp-download-status" class="sp-log" style="display:none"></div>'
+  //);
+//}
+/**
+ * Returns HTML for the main side panel UI after login (10/10 Pro UI).
+ * @param {string} userName - Display name of the user
+ * @param {string} statusBadge - HTML badge from spTemplateStatusBadge()
+ * @returns {string} - Main UI HTML
+ */
+function spTemplateMainUI(userName, statusBadge) {
+  return (
+    '<div id="sp-update-banner" style="display:none"></div>' +
+    '<div class="sp-profile-card">' +
+      '<div class="sp-profile-top">' +
+        '<div class="sp-avatar">S</div>' +
+        '<div class="sp-user-info">' +
+          '<div class="sp-username-row">' +
+            '<span class="sp-profile-name" id="sp-name">' + spEscapeHtml(userName) + '</span>' +
+            statusBadge +
+          '</div>' +
+          '<div class="sp-sync-status" id="sp-sync">' +
+            '<span class="sp-sync-pulse"></span>' +
+            '<span>' + SP_SVG.clock + t("sync.waiting") + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="sp-trial-countdown" id="sp-countdown" style="display:none"></div>' +
+    '</div>' +
+
+    '<div id="sp-reseller-btn" style="display:none;margin-bottom:10px"></div>'
   );
 }
-
 // ============================================================
 // SECTION 19: PROMPT CONTENT TEMPLATE (ADDED)
 // ============================================================
