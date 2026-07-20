@@ -1554,21 +1554,80 @@ body {
 
 */
 
-/*new add*/
 /* ============================================= */
-/* 10/10 PRO UI NEW COMPONENT STYLES             */
+/* 10/10 PRO LOVABLE GLASS UI OVERRIDES          */
 /* ============================================= */
 
-/* Chat Container */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  background: #08080a !important;
+  color: #f8fafc !important;
+}
+
+/* HEADER & PROFILE */
+.sp-header {
+  padding: 10px 14px !important;
+  background: rgba(22, 22, 29, 0.95) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(16px);
+}
+
+.sp-profile-card {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  padding: 10px 12px !important;
+  backdrop-filter: blur(12px);
+}
+
+.sp-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.sp-sync-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9.5px;
+  color: #34d399;
+  font-weight: 600;
+}
+
+.sp-sync-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px #34d399;
+}
+
+/* 10/10 LOVABLE CHAT CONTAINER & TEXTAREA */
 .sp-chat-container {
   background: #141419 !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 14px !important;
   padding: 10px 12px !important;
   display: flex;
   flex-direction: column;
   gap: 8px;
   position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.sp-chat-container:focus-within {
+  border-color: #818cf8 !important;
+  box-shadow: 0 0 20px rgba(129, 140, 248, 0.22) !important;
 }
 
 .sp-chat-textarea {
@@ -1578,8 +1637,14 @@ body {
   outline: none !important;
   color: #f8fafc !important;
   font-size: 12.5px !important;
+  font-family: inherit;
   resize: none;
   height: 48px;
+  line-height: 1.5;
+}
+
+.sp-chat-textarea::placeholder {
+  color: #64748b;
 }
 
 .sp-chat-toolbar {
@@ -1596,7 +1661,7 @@ body {
   gap: 6px;
 }
 
-/* Plus Button & Hover Tooltip */
+/* PLUS (+) BUTTON & TOOLTIP */
 .sp-plus-btn-group {
   position: relative;
   display: flex;
@@ -1607,18 +1672,22 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #f1f5f9 !important;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s;
 }
 
 .sp-plus-btn:hover {
-  background: #6366f1;
-  color: #fff;
+  background: #6366f1 !important;
+  color: #fff !important;
+  transform: scale(1.05);
 }
 
 .sp-plus-tooltip {
@@ -1640,42 +1709,43 @@ body {
   opacity: 1;
 }
 
-/* Popover Action Menu */
+/* POPOVER ACTION MENU (Triggered by +) */
 .sp-menu-popover {
   position: absolute;
-  bottom: 50px;
-  left: 10px;
+  bottom: 130px;
+  left: 12px;
   width: 220px;
-  background: rgba(24, 24, 30, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 12px;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85);
-  padding: 6px;
+  background: rgba(24, 24, 30, 0.98) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85) !important;
+  padding: 6px !important;
   display: flex;
   flex-direction: column;
   gap: 2px;
   z-index: 1000;
+  backdrop-filter: blur(20px);
 }
 
 .sp-menu-item {
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 7px 10px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #e2e8f0;
-  background: transparent;
-  border: none;
+  padding: 7px 10px !important;
+  border-radius: 8px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #e2e8f0 !important;
+  background: transparent !important;
+  border: none !important;
   cursor: pointer;
   text-align: left;
   width: 100%;
 }
 
 .sp-menu-item:hover {
-  background: rgba(99, 102, 241, 0.2);
-  color: #fff;
+  background: rgba(99, 102, 241, 0.2) !important;
+  color: #fff !important;
 }
 
 .sp-menu-divider {
@@ -1684,7 +1754,45 @@ body {
   margin: 3px 0;
 }
 
-/* Live Chat Conversation Feed */
+/* SEND BUTTON & TOOL BUTTONS */
+.sp-tool-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: transparent !important;
+  border: none !important;
+  color: #94a3b8 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.sp-tool-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
+}
+
+.sp-send-btn {
+  padding: 6px 14px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%) !important;
+  color: #09090b !important;
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  border: none !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 4px 14px rgba(129, 140, 248, 0.35) !important;
+}
+
+.sp-send-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* CHAT FEED BUBBLES */
 .sp-msg-wrapper {
   display: flex;
   flex-direction: column;
@@ -1693,20 +1801,20 @@ body {
 }
 
 .sp-msg-user .sp-msg-bubble {
-  background: #1e1e24;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  color: #f8fafc;
-  border-radius: 12px 12px 2px 12px;
-  padding: 8px 12px;
+  background: #1e1e24 !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  color: #f8fafc !important;
+  border-radius: 12px 12px 2px 12px !important;
+  padding: 8px 12px !important;
   font-size: 12px;
 }
 
 .sp-msg-ai .sp-msg-bubble {
-  background: rgba(168, 85, 247, 0.08);
-  border: 1px solid rgba(168, 85, 247, 0.22);
-  color: #e2e8f0;
-  border-radius: 12px 12px 12px 2px;
-  padding: 10px 12px;
+  background: rgba(168, 85, 247, 0.08) !important;
+  border: 1px solid rgba(168, 85, 247, 0.22) !important;
+  color: #e2e8f0 !important;
+  border-radius: 12px 12px 12px 2px !important;
+  padding: 10px 12px !important;
   font-size: 12px;
 }
 
@@ -1727,4 +1835,29 @@ body {
   font-size: 10px;
   font-family: monospace;
   color: #38bdf8;
+}
+
+/* SHORTCUTS GRID */
+.sp-shortcuts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.sp-chip-btn, .sp-chip {
+  padding: 6px 4px !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 7px !important;
+  color: #94a3b8 !important;
+  font-size: 10px !important;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+.sp-chip-btn:hover, .sp-chip:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
 }
