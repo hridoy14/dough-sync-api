@@ -1861,3 +1861,25 @@ body {
   background: rgba(255, 255, 255, 0.08) !important;
   color: #f8fafc !important;
 }
+/* ============================================= */
+/* LOGO SIZE FIX (Heart Image Resize)            */
+/* ============================================= */
+
+.sp-lock-icon img {
+  width: 56px !important;
+  height: 56px !important;
+  max-width: 56px !important;
+  max-height: 56px !important;
+  object-fit: contain;
+  border-radius: 12px;
+  display: block;
+  margin: 0 auto;
+}
+
+.sp-brand-logo {
+  width: 24px !important;
+  height: 24px !important;
+  max-width: 24px !important;
+  max-height: 24px !important;
+  object-fit: contain;
+}
