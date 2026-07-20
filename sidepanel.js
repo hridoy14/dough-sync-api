@@ -668,6 +668,7 @@
   // =============================================
   // PROMPT CONTENT (Main Prompt UI)
   // =============================================
+  /*
   function spRenderPromptContent() {
     const content = document.getElementById("sp-tab-content");
     if (!content) return;
@@ -689,24 +690,25 @@
           "<button class=\"sp-tool-btn\" id=\"sp-speech\" title=\"" + t("btn.speech.short") + "\">" + SP_SVG.mic + "</button>" +
           "<button class=\"sp-send-btn\" id=\"sp-send\">" + t("btn.send") + "</button>" +
         "</div>" +
-      "</div>" +
-      "<input type=\"file\" id=\"sp-file-input\" multiple style=\"display:none\" accept=\"*/*\">" +
-      "<div class=\"sp-log\" id=\"sp-log\"></div>" +
-      "<span class=\"sp-shortcuts-title\">" + t("shortcuts.title") + "</span>" +
-      "<div class=\"sp-shortcuts-grid\" id=\"sp-chips\"></div>" +
-      "<button id=\"sp-remove-watermark\" class=\"sp-watermark-btn\">" + t("btn.watermark") + "</button>" +
-      "<button id=\"sp-drop-down\" class=\"sp-watermark-btn\" style=\"display:none;\">Drop Down</button>" +
-      "<button id=\"sp-shield-btn\" class=\"sp-shield-btn\">" +
-        "<span id=\"sp-shield-label\">" + t("btn.shield.on") + "</span>" +
-      "</button>" +
-      "<button id=\"sp-native-chat-btn\" class=\"sp-shield-btn\" style=\"background:linear-gradient(135deg,rgba(124,90,255,0.12),rgba(168,85,247,0.08));border-color:rgba(124,90,255,0.3);color:var(--ql-accent,#67e8f9);margin-top:6px\">" +
-        "<span id=\"sp-native-chat-label\">" + t("btn.nativeChat") + "</span>" +
-      "</button>" +
-      "<button id=\"sp-download-project\" class=\"sp-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(37,99,235,0.08));border-color:rgba(59,130,246,0.3);color:#60a5fa;margin-top:6px\">" + t("btn.download") + "</button>" +
-      "<button id=\"sp-quick-init\" class=\"sp-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(250,204,21,0.12),rgba(234,179,8,0.08));border-color:rgba(250,204,21,0.35);color:#facc15;margin-top:6px\">Create New Project</button>" +
-      "<div id=\"sp-download-status\" class=\"sp-log\" style=\"display:none\"></div>";
+      "</div>" +*/
+      //"<input type=\"file\" id=\"sp-file-input\" multiple style=\"display:none\" accept=\"*/*\">" +
+      //"<div class=\"sp-log\" id=\"sp-log\"></div>" +
+     // "<span class=\"sp-shortcuts-title\">" + t("shortcuts.title") + "</span>" +
+     // "<div class=\"sp-shortcuts-grid\" id=\"sp-chips\"></div>" +
+      //"<button id=\"sp-remove-watermark\" class=\"sp-watermark-btn\">" + t("btn.watermark") + "</button>" +
+     // "<button id=\"sp-drop-down\" class=\"sp-watermark-btn\" style=\"display:none;\">Drop Down</button>" +
+     // "<button id=\"sp-shield-btn\" class=\"sp-shield-btn\">" +
+       // "<span id=\"sp-shield-label\">" + t("btn.shield.on") + "</span>" +
+     // "</button>" +
+      //"<button id=\"sp-native-chat-btn\" class=\"sp-shield-btn\" style=\"background:linear-gradient(135deg,rgba(124,90,255,0.12),rgba(168,85,247,0.08));border-color:rgba(124,90,255,0.3);color:var(--ql-accent,#67e8f9);margin-top:6px\">" +
+       // "<span id=\"sp-native-chat-label\">" + t("btn.nativeChat") + "</span>" +
+      //"</button>" +
+     // "<button id=\"sp-download-project\" class=\"sp-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(37,99,235,0.08));border-color:rgba(59,130,246,0.3);color:#60a5fa;margin-top:6px\">" + t("btn.download") + "</button>" +
+      //"<button id=\"sp-quick-init\" class=\"sp-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(250,204,21,0.12),rgba(234,179,8,0.08));border-color:rgba(250,204,21,0.35);color:#facc15;margin-top:6px\">Create New Project</button>" +
+     // "<div id=\"sp-download-status\" class=\"sp-log\" style=\"display:none\"></div>";
 
     // Render chips (quick actions)
+    /*
     const chipsContainer = document.getElementById("sp-chips");
     SP_TEMPLATES.forEach(template => {
       const chip = document.createElement("button");
@@ -754,6 +756,95 @@
     spSetupDownloadProject();
     spSetupQuickInit();
   }
+*/
+
+
+  // =============================================
+  // PROMPT CONTENT (Main Prompt UI - 10/10 Pro)
+  // =============================================
+  function spRenderPromptContent() {
+    const content = document.getElementById("sp-tab-content");
+    if (!content) return;
+
+    // templates.js থেকে নতুন ১০/১০ পপআপ মেনু ওয়ালা ডিজাইন লোড করা
+    content.innerHTML = spTemplatePromptContent();
+
+    // Plus (+) Button Click Event to Toggle Popover Menu
+    const plusBtn = document.getElementById("sp-plus-trigger");
+    const popoverMenu = document.getElementById("sp-popover-menu");
+
+    if (plusBtn && popoverMenu) {
+      plusBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const isOpen = popoverMenu.style.display !== "none";
+        popoverMenu.style.display = isOpen ? "none" : "flex";
+      });
+
+      // স্ক্রিনের অন্য কোথাও ক্লিক করলে মেনু অটো বন্ধ হওয়া
+      document.addEventListener("click", () => {
+        popoverMenu.style.display = "none";
+      });
+    }
+
+    // Render chips (quick actions)
+    const chipsContainer = document.getElementById("sp-chips");
+    if (chipsContainer && typeof SP_TEMPLATES !== "undefined") {
+      SP_TEMPLATES.forEach(template => {
+        const chip = document.createElement("button");
+        chip.className = "sp-chip";
+        chip.innerHTML = template.icon + " " + template.label;
+        chip.title = template.prompt;
+        chip.addEventListener("click", () => {
+          document.getElementById("sp-msg").value = template.prompt;
+        });
+        chipsContainer.appendChild(chip);
+      });
+    }
+
+    // Plan mode toggle
+    chrome.storage.local.get(["ql_modo_plano"], stored => {
+      const planCheck = document.getElementById("sp-modo-plano");
+      if (planCheck && stored.ql_modo_plano) {
+        planCheck.checked = true;
+      }
+    });
+
+    const modoPlanoEl = document.getElementById("sp-modo-plano");
+    if (modoPlanoEl) {
+      modoPlanoEl.addEventListener("change", function () {
+        chrome.storage.local.set({ ql_modo_plano: this.checked });
+        if (this.checked) spShowPlanModeModal();
+      });
+    }
+
+    // Setup features
+    spSetupDragDrop();
+    spSetupSpeech();
+
+    const msgInput = document.getElementById("sp-msg");
+    if (msgInput) {
+      msgInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          spHandleSendClick();
+        }
+      });
+    }
+
+    const sendBtn = document.getElementById("sp-send");
+    if (sendBtn) sendBtn.addEventListener("click", spHandleSendClick);
+
+    const optBtn = document.getElementById("sp-optimize");
+    if (optBtn) optBtn.addEventListener("click", spHandleOptimizeClick);
+
+    spSetupFileAttachment();
+    spSetupWatermarkButton();
+    spSetupShield();
+    spSetupNativeChat();
+    spSetupDownloadProject();
+    spSetupQuickInit();
+  }
+
 
   // =============================================
   // SPEECH RECOGNITION
