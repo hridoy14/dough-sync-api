@@ -344,8 +344,8 @@
           }
         } catch (error) {}
 
-       // return originalFetch.apply(this, args);
-       //new add
+       return originalFetch.apply(this, args);
+       /* 
        window.fetch = async function (...args) {
   const url = typeof args[0] === "string" ? args[0] : (args[0] && args[0].url) || "";
   
@@ -360,7 +360,7 @@
   }
 
   return originalFetch.apply(this, args);
-};
+};*/
       };
     } catch (error) {
       console.warn("[MasterLovableHook] erro fetch", error);
