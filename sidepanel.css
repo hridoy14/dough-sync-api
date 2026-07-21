@@ -273,15 +273,16 @@ body.sp-light .sp-brand-logo {
 
 /* ============================================= */
 /* BODY CONTAINER                                */
-/* ============================================= 
+/* ============================================= */
 .sp-body {
   flex: 1 !important;
   display: flex !important;
   flex-direction: column !important;
+ height: 100% !important;
   min-height: 0 !important;
-  padding: 10px !important;
   overflow: hidden !important;
-}*/
+  padding: 10px !important;
+}
 /* ============================================= */
 /* LICENSE GATE (Login Screen)                   */
 /* ============================================= */
@@ -1282,8 +1283,8 @@ body.sp-light .sp-brand-logo {
   background: #141419 !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
   border-radius: 14px !important;
-  padding: 10px !important;
-  position: relative !important;
+  padding: 10px 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
 }
 
 .sp-chat-messages {
@@ -1616,21 +1617,13 @@ body {
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  height: 100vh ;
- 
+  height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
-  background: #08080a !important;
-  color: #f8fafc !important;
   font-family: 'Plus Jakarta Sans', -apple-system, sans-serif !important;
-  
-  background: var(--ql-bg);
-  color: var(--ql-text-primary);
-
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
- 
 }
 
 
@@ -1791,4 +1784,12 @@ html, body {
   color: #a1a1aa !important;
   font-size: 9.5px !important;
   cursor: pointer !important;
+}
+/* 3. TAB CONTENT TAKES ALL REMAINING HEIGHT */
+#sp-tab-content {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  justify-content: space-between !important;
 }
