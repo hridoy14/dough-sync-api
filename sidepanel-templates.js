@@ -721,34 +721,27 @@ function spTemplatePromptContent() {
 //}
 
 /**
- * Returns HTML for the prompt tab content area (10/10 Clean Layout).
+ * Returns HTML for the prompt tab content area (Clean Single Icons + Bottom Feed).
  * @returns {string} - Prompt content HTML
  */
 function spTemplatePromptContent() {
   return (
-    // ১. লাইভ কনভারসেশন ফিড (যা মাঝখানের খালি জায়গা ভরট করবে)
+    // ১. মাঝখানের সম্পূর্ণ ফ্লেক্স চ্যাট ফিড (মেসেজ দেখানোর জায়গা)
     '<div class="sp-chat-feed" id="sp-chat-feed"></div>' +
 
-    // ২. বটম ইনপুট এডিটর কন্টেইনার
+    // ২. একদম নিচে ফিক্সড চ্যাট ইনপুট বক্স
     '<div class="sp-chat-container">' +
       '<textarea class="sp-textarea sp-chat-textarea" id="sp-msg" rows="3" placeholder="' + t("prompt.placeholder") + '" spellcheck="false"></textarea>' +
       '<div id="sp-attach-preview" class="sp-attach-preview" style="display:none"></div>' +
 
       '<div class="sp-chat-toolbar">' +
-        // Left: Plus (+) and Flash (⚡) Triggers
+        // Left Triggers (+ Tools & ⚡ Shortcuts Icons ONLY)
         '<div class="sp-toolbar-left">' +
-          '<div class="sp-plus-btn-group">' +
-            '<button class="sp-plus-btn" id="sp-plus-trigger" type="button" title="Tools & Actions">+</button>' +
-            '<span class="sp-plus-tooltip">Tools & Actions</span>' +
-          '</div>' +
-
-          '<div class="sp-plus-btn-group">' +
-            '<button class="sp-plus-btn" id="sp-shortcuts-trigger" type="button" title="Quick Shortcuts">⚡</button>' +
-            '<span class="sp-plus-tooltip">Quick Shortcuts</span>' +
-          '</div>' +
+          '<button class="sp-plus-btn" id="sp-plus-trigger" type="button" title="Tools & Actions">+</button>' +
+          '<button class="sp-plus-btn" id="sp-shortcuts-trigger" type="button" title="Quick Shortcuts">⚡</button>' +
         '</div>' +
 
-        // Right Controls: Plan Switch, AI Sparkles, Vector Mic, Send Button
+        // Right Controls
         '<div class="sp-toolbar-right">' +
           '<div class="sp-plan-pill">' +
             '<span>Plan</span>' +
@@ -776,7 +769,7 @@ function spTemplatePromptContent() {
         '</div>' +
       '</div>' +
 
-      // POPUP 1: Actions Menu (+)
+      // POPUP 1: Tools & Actions (+) Menu
       '<div class="sp-menu-popover" id="sp-popover-menu" style="display:none;">' +
         '<button id="sp-shield-btn" type="button" class="sp-menu-item">🛡️ <span id="sp-shield-label">' + t("btn.shield.on") + '</span></button>' +
         '<button id="sp-native-chat-btn" type="button" class="sp-menu-item">💬 <span id="sp-native-chat-label">' + t("btn.nativeChat") + '</span></button>' +
@@ -787,8 +780,8 @@ function spTemplatePromptContent() {
         '<button id="sp-attach-btn" type="button" class="sp-menu-item">📎 <span>' + t("btn.attach.short") + '</span></button>' +
       '</div>' +
 
-      // POPUP 2: Shortcuts Menu (⚡)
-      '<div class="sp-menu-popover" id="sp-shortcuts-popover-menu" style="display:none; left:48px;">' +
+      // POPUP 2: Quick Shortcuts (⚡) Menu
+      '<div class="sp-menu-popover" id="sp-shortcuts-popover-menu" style="display:none; left:44px;">' +
         '<div class="sp-shortcuts-grid" id="sp-chips"></div>' +
       '</div>' +
     '</div>' +
