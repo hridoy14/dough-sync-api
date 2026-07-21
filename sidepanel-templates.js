@@ -676,7 +676,7 @@ function spTemplateMainUI(userName, statusBadge) {
       '<div class="sp-trial-countdown" id="sp-countdown" style="display:none"></div>' +
     '</div>' +
 
-    '<div id="sp-reseller-btn" style="display:none;margin-bottom:10px"></div>'
+    '<div id="sp-reseller-btn" style="display:none;margin-bottom:8px"></div>'
   );
 }
 // ============================================================
@@ -726,16 +726,16 @@ function spTemplatePromptContent() {
  */
 function spTemplatePromptContent() {
   return (
-    // ১. মাঝখানের সম্পূর্ণ কনভারসেশন ফিড (যেখানে চ্যাট হিস্ট্রি থাকবে)
+    // ১. লাইভ কনভারসেশন ফিড (যা মাঝখানের খালি জায়গা ভরট করবে)
     '<div class="sp-chat-feed" id="sp-chat-feed"></div>' +
 
-    // ২. একদম ফুটারে ফিক্সড চ্যাট ইনপুট বক্স
+    // ২. বটম ইনপুট এডিটর কন্টেইনার
     '<div class="sp-chat-container">' +
       '<textarea class="sp-textarea sp-chat-textarea" id="sp-msg" rows="3" placeholder="' + t("prompt.placeholder") + '" spellcheck="false"></textarea>' +
       '<div id="sp-attach-preview" class="sp-attach-preview" style="display:none"></div>' +
 
       '<div class="sp-chat-toolbar">' +
-        // Left Triggers (+ and ⚡ Icons)
+        // Left: Plus (+) and Flash (⚡) Triggers
         '<div class="sp-toolbar-left">' +
           '<div class="sp-plus-btn-group">' +
             '<button class="sp-plus-btn" id="sp-plus-trigger" type="button" title="Tools & Actions">+</button>' +
@@ -748,7 +748,7 @@ function spTemplatePromptContent() {
           '</div>' +
         '</div>' +
 
-        // Right Controls
+        // Right Controls: Plan Switch, AI Sparkles, Vector Mic, Send Button
         '<div class="sp-toolbar-right">' +
           '<div class="sp-plan-pill">' +
             '<span>Plan</span>' +
@@ -776,7 +776,7 @@ function spTemplatePromptContent() {
         '</div>' +
       '</div>' +
 
-      // POPUP 1: Tools & Actions (+) Menu
+      // POPUP 1: Actions Menu (+)
       '<div class="sp-menu-popover" id="sp-popover-menu" style="display:none;">' +
         '<button id="sp-shield-btn" type="button" class="sp-menu-item">🛡️ <span id="sp-shield-label">' + t("btn.shield.on") + '</span></button>' +
         '<button id="sp-native-chat-btn" type="button" class="sp-menu-item">💬 <span id="sp-native-chat-label">' + t("btn.nativeChat") + '</span></button>' +
@@ -787,7 +787,7 @@ function spTemplatePromptContent() {
         '<button id="sp-attach-btn" type="button" class="sp-menu-item">📎 <span>' + t("btn.attach.short") + '</span></button>' +
       '</div>' +
 
-      // POPUP 2: Quick Shortcuts (⚡) Menu
+      // POPUP 2: Shortcuts Menu (⚡)
       '<div class="sp-menu-popover" id="sp-shortcuts-popover-menu" style="display:none; left:48px;">' +
         '<div class="sp-shortcuts-grid" id="sp-chips"></div>' +
       '</div>' +
@@ -798,7 +798,7 @@ function spTemplatePromptContent() {
     '<div id="sp-download-status" class="sp-log" style="display:none"></div>'
   );
 }
-// ============================================================
+//=============================
 // END OF FILE — sidepanel-templates.js
 // All original functions preserved. No code deleted.
 // Brazilian Portuguese → English conversion complete.
