@@ -218,15 +218,13 @@
   // =============================================
   
   // 1. Back to Popup Button
-  const backToPopupBtn = document.getElementById("sp-back-to-popup");
-  if (backToPopupBtn) {
-    backToPopupBtn.addEventListener("click", () => {
+  if (document.getElementById("sp-back-to-popup")) {
+    document.getElementById("sp-back-to-popup").onclick = function() {
       try { chrome.storage.local.set({ ql_sidebar_mode: false }); } catch (e) {}
       try { chrome.runtime.sendMessage({ action: "deactivateSidebar" }); } catch (e) {}
       try { window.close(); } catch (e) {}
-    });
+    };
   }
-
   // 2. Theme Toggle Button
   const themeBtn = document.querySelector(".sp-theme-btn");
   if (themeBtn) {
