@@ -601,22 +601,26 @@
         //SP_SVG.clock + t("sync.waiting") +
         "<div class=\"sp-sync-status\" id=\"sp-sync\">" + SP_SVG.clock + t("sync.waiting") + "</div>" +
         "</div>" +
-        spTemplateTabs(spActiveTab, spChatHistory.length) +
+        // spTemplateTabs(spActiveTab, spChatHistory.length) +
         "<div id=\"sp-tab-content\"></div>";
 
       // Tab click handlers
-      document.querySelectorAll(".sp-tab").forEach(tab => {
+     /* document.querySelectorAll(".sp-tab").forEach(tab => {
         tab.addEventListener("click", function () {
           spSwitchTab(tab.getAttribute("data-tab"));
         });
       });
-
+*/
       // Render active tab
+      /*
       if (spActiveTab === "history") {
         spRenderChatHistory();
       } else {
         spRenderPromptContent();
-      }
+      }*/
+
+      // সরাসরি চ্যাট ফিড ও ইনপুট বক্স রেন্ডার করা
+      spRenderPromptContent();
       /*
       // Sync status
       spUpdateSyncStatus();
@@ -759,17 +763,20 @@
 */
 
 
-  // =============================================
-  // PROMPT CONTENT (Main Prompt UI - 10/10 Pro)
+    // =============================================
+  // PROMPT CONTENT & CONVERSATION FEED (10/10 Pro)
   // =============================================
   function spRenderPromptContent() {
     const content = document.getElementById("sp-tab-content");
     if (!content) return;
 
-    // templates.js থেকে নতুন ১০/১০ পপআপ মেনু ওয়ালা ডিজাইন লোড করা
+    // টেমপ্লেট থেকে চ্যাট ফিড ও বটম ইনপুট বক্স লোড করা
     content.innerHTML = spTemplatePromptContent();
 
-        // 1. Plus (+) Tools Popover Toggle
+    // লাইভ চ্যাট মেসেজ ফিডে দেখানো
+    spRenderChatFeed();
+
+    // 1. Plus (+) Tools Popover Toggle
     const plusBtn = document.getElementById("sp-plus-trigger");
     const popoverMenu = document.getElementById("sp-popover-menu");
     
@@ -778,85 +785,64 @@
     const shortcutsMenu = document.getElementById("sp-shortcuts-popover-menu");
 
     if (plusBtn && popoverMenu) {
-      plusBtn.addEventListener("click", (event) => {
+      plusBtn.onclick = function(event) {
         event.stopPropagation();
         if (shortcutsMenu) shortcutsMenu.style.display = "none";
-        const isOpen = popoverMenu.style.display !== "none";
-        popoverMenu.style.display = isOpen ? "none" : "flex";
-      });
+        const isHidden = popoverMenu.style.display === "none" || !popoverMenu.style.display;
+        popoverMenu.style.display = isHidden ? "flex" : "none";
+      };
     }
 
     if (shortcutsBtn && shortcutsMenu) {
-      shortcutsBtn.addEventListener("click", (event) => {
+      shortcutsBtn.onclick = function(event) {
         event.stopPropagation();
         if (popoverMenu) popoverMenu.style.display = "none";
-        const isOpen = shortcutsMenu.style.display !== "none";
-        shortcutsMenu.style.display = isOpen ? "none" : "flex";
-      });
+        const isHidden = shortcutsMenu.style.display === "none" || !shortcutsMenu.style.display;
+        shortcutsMenu.style.display = isHidden ? "flex" : "none";
+      };
     }
 
-    // স্ক্রিনের যেকোনো জায়গায় ক্লিক করলে দুইটা মেনুই বন্ধ হবে
-    document.addEventListener("click", () => {
+    // স্ক্রিনের যেকোনো জায়গায় ক্লিক করলে দুইটা মেনুই বন্ধ হওয়া
+    document.onclick = function() {
       if (popoverMenu) popoverMenu.style.display = "none";
       if (shortcutsMenu) shortcutsMenu.style.display = "none";
-    });
+    };
 
-      // স্ক্রিনের অন্য কোথাও ক্লিক করলে মেনু অটো বন্ধ হওয়া
-      document.addEventListener("click", () => {
-        popoverMenu.style.display = "none";
-      });
-    
-
-    // Render chips (quick actions)
+    // ⚡ শর্টকাট আইটেমে ক্লিক করলে প্রম্পট ইনপুটে বসবে এবং মেনু বন্ধ হবে
     const chipsContainer = document.getElementById("sp-chips");
     if (chipsContainer && typeof SP_TEMPLATES !== "undefined") {
+      chipsContainer.innerHTML = "";
       SP_TEMPLATES.forEach(template => {
         const chip = document.createElement("button");
+        chip.type = "button";
         chip.className = "sp-chip";
         chip.innerHTML = template.icon + " " + template.label;
         chip.title = template.prompt;
-        chip.addEventListener("click", () => {
+        chip.onclick = function(e) {
+          e.stopPropagation();
           document.getElementById("sp-msg").value = template.prompt;
-        });
+          if (shortcutsMenu) shortcutsMenu.style.display = "none";
+        };
         chipsContainer.appendChild(chip);
       });
     }
 
-    // Plan mode toggle
-    chrome.storage.local.get(["ql_modo_plano"], stored => {
-      const planCheck = document.getElementById("sp-modo-plano");
-      if (planCheck && stored.ql_modo_plano) {
-        planCheck.checked = true;
-      }
-    });
-
-    const modoPlanoEl = document.getElementById("sp-modo-plano");
-    if (modoPlanoEl) {
-      modoPlanoEl.addEventListener("change", function () {
-        chrome.storage.local.set({ ql_modo_plano: this.checked });
-        if (this.checked) spShowPlanModeModal();
-      });
-    }
-
-    // Setup features
-    spSetupDragDrop();
-    spSetupSpeech();
-
+    // ইনপুট ইভেন্ট ও বাটন হ্যান্ডলারস
     const msgInput = document.getElementById("sp-msg");
     if (msgInput) {
-      msgInput.addEventListener("keydown", function (event) {
+      msgInput.onkeydown = function (event) {
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
           spHandleSendClick();
         }
-      });
+      };
     }
 
     const sendBtn = document.getElementById("sp-send");
-    if (sendBtn) sendBtn.addEventListener("click", spHandleSendClick);
+    if (sendBtn) sendBtn.onclick = spHandleSendClick;
 
     const optBtn = document.getElementById("sp-optimize");
-    if (optBtn) optBtn.addEventListener("click", spHandleOptimizeClick);
+    if (optBtn) optBtn.onclick = spHandleOptimizeClick;
 
     spSetupFileAttachment();
     spSetupWatermarkButton();
@@ -866,6 +852,26 @@
     spSetupQuickInit();
   }
 
+  // চ্যাট হিস্ট্রি ফিডে দেখানোর ফাংশন
+  function spRenderChatFeed() {
+    const feed = document.getElementById("sp-chat-feed");
+    if (!feed) return;
+
+    if (!spChatHistory || !spChatHistory.length) {
+      feed.innerHTML = 
+        '<div style="text-align:center; padding:30px 10px; color:#64748b; font-size:11px;">' +
+          '💬 Conversation feed will appear here' +
+        '</div>';
+      return;
+    }
+
+    let html = "";
+    for (let i = 0; i < spChatHistory.length; i++) {
+      html += spTemplateChatBubble(spChatHistory[i]);
+    }
+    feed.innerHTML = html;
+    feed.scrollTop = feed.scrollHeight;
+  }
 
   // =============================================
   // SPEECH RECOGNITION
