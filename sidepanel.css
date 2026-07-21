@@ -284,11 +284,13 @@ body.sp-light .sp-brand-logo {
 /* BODY CONTAINER                                */
 /* ============================================= */
 .sp-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  padding: 10px !important;
+  overflow: hidden !important;
 }
-
 /* ============================================= */
 /* LICENSE GATE (Login Screen)                   */
 /* ============================================= */
@@ -1284,9 +1286,13 @@ body.sp-light .sp-brand-logo {
 /* CHAT HISTORY (WhatsApp-like)                  */
 /* ============================================= */
 .sp-chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+  margin-top: auto !important;
+  flex-shrink: 0 !important;
+  background: #141419 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 14px !important;
+  padding: 10px !important;
+  position: relative !important;
 }
 
 .sp-chat-messages {
