@@ -233,3 +233,24 @@ html, body {
   min-height: 0 !important;
   justify-content: space-between !important;
 }
+/* ১. খালি লগার ডিভের মার্জিন ও প্যাডিং সম্পূর্ণ বন্ধ করা */
+.sp-log:empty, #sp-download-status:empty {
+  display: none !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ২. অনাকাঙ্ক্ষিত ফুটার স্পেস হাইড করা */
+.sp-footer {
+  display: none !important;
+}
+
+/* ৩. বডির নিচের অতিরিক্ত গ্যাপ রিমুভ করে ইনপুট একদম নিচে পিন করা */
+.sp-body {
+  padding-bottom: 4px !important;
+}
+
+.sp-chat-container {
+  margin-bottom: 0 !important;
+}
