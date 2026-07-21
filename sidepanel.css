@@ -22,15 +22,14 @@
 
 /* ২. চ্যাট ফিড মাঝখানের সম্পূর্ণ খালি জায়গা দখল করবে */
 #sp-chat-feed, .sp-chat-feed {
-  position: fixed !important;
-  top: 65px !important;
-  bottom: 125px !important;
-  left: 10px !important;
-  right: 10px !important;
+  flex: 1 !important;
+  min-height: 0 !important; /* 👈 মাঝের জায়গা দখল করবে */
   overflow-y: auto !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 10px !important;
+  padding: 6px !important;
+  margin-bottom: 8px !important;
 }
 
 /* ============================================= */
@@ -103,8 +102,8 @@ html, body {
   padding: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  overflow: hidden !important;
   font-family: 'Plus Jakarta Sans', -apple-system, sans-serif !important;
+   max-height: 100vh !important;
 }
 
 
@@ -249,8 +248,22 @@ html, body {
 /* ৩. বডির নিচের অতিরিক্ত গ্যাপ রিমুভ করে ইনপুট একদম নিচে পিন করা */
 .sp-body {
   padding-bottom: 4px !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important; /* 👈 এটিই আসল সিক্রেট: প্রসারিত হতে সাহায্য করে */
+  padding: 10px !important;
+  overflow: hidden !important;
 }
 
 .sp-chat-container {
-  margin-bottom: 0 !important;
+ flex-shrink: 0 !important; /* গুটিয়ে যাওয়া বন্ধ করবে */
+  margin-top: auto !important; /* ঠেলে ফুটারে পাঠাবে */
+  position: relative !important;
+  background: #141419 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 14px !important;
+  padding: 10px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6) !important;
 }
