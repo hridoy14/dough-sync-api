@@ -246,10 +246,14 @@
   // =============================================
   // THEME TOGGLE BUTTON
   // =============================================
-  document.querySelector(".sp-theme-btn").addEventListener("click", () => {
-    const isLight = document.body.classList.toggle("sp-light");
-    chrome.storage.local.set({ ql_dark_mode: !isLight });
-  });
+   const themeBtn = document.querySelector(".sp-theme-btn");
+  if (themeBtn) {
+    themeBtn.addEventListener("click", () => {
+      const isLight = document.body.classList.toggle("sp-light");
+      chrome.storage.local.set({ ql_dark_mode: !isLight });
+    });
+  }
+
 
   // =============================================
   // LOGOUT BUTTON
