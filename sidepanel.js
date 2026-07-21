@@ -252,6 +252,15 @@
     chrome.storage.local.set({ ql_dark_mode: !isLight });
   });
 */
+
+ const themeBtn = document.querySelector(".sp-theme-btn");
+  if (themeBtn) {
+    themeBtn.addEventListener("click", () => {
+      const isLight = document.body.classList.toggle("sp-light");
+      chrome.storage.local.set({ ql_dark_mode: !isLight });
+    });
+  }
+
   // =============================================
   // LOGOUT BUTTON
   // =============================================
@@ -335,6 +344,7 @@
   // =============================================
   // NOTIFICATION PANEL
   // =============================================
+  /* 
   const spNotifPanel = document.getElementById("sp-notif-panel");
 
   document.querySelector(".sp-notif-btn").addEventListener("click", event => {
@@ -411,7 +421,46 @@
       });
     } catch (error) {}
   }
+*/
+const spNotifPanel = document.getElementById("sp-notif-panel");
+  const notifBtn = document.querySelector(".sp-notif-btn");
+  const notifCloseBtn = document.getElementById("sp-notif-close");
+  const notifMarkReadBtn = document.getElementById("sp-notif-markread");
 
+  if (notifBtn && spNotifPanel) {
+    notifBtn.addEventListener("click", event => {
+      event.stopPropagation();
+      const isOpen = spNotifPanel.style.display !== "none";
+      spNotifPanel.style.display = isOpen ? "none" : "block";
+      if (!isOpen) spLoadNotifications();
+    });
+  }
+
+  if (notifCloseBtn && spNotifPanel) {
+    notifCloseBtn.addEventListener("click", () => {
+      spNotifPanel.style.display = "none";
+    });
+  }
+
+  if (notifMarkReadBtn && spNotifPanel) {
+    notifMarkReadBtn.addEventListener("click", async () => {
+      try {
+        const notifs = await spSafeProxyFetch(SP_NOTIFICATIONS_URL, {
+          method: "GET",
+          headers: { apikey: SP_SUPABASE_ANON_KEY }
+        });
+        if (notifs && notifs.length) {
+          chrome.storage.local.set({
+            ql_read_notifs: notifs.map(n => n.id)
+          });
+        }
+      } catch (error) {}
+
+      const badge = document.querySelector(".sp-notif-badge");
+      if (badge) badge.style.display = "none";
+      spNotifPanel.style.display = "none";
+    });
+  }
   // =============================================
   // UPDATE CHECK
   // =============================================
