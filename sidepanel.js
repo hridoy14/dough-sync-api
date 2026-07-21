@@ -213,20 +213,11 @@
     overlay.querySelector(".sp-alert-ok").addEventListener("click", () => overlay.remove());
     setTimeout(() => overlay.remove(), 4000);
   }
-
   // =============================================
-  // BACK TO POPUP BUTTON
+  // SAFE HEADER & FOOTER EVENT LISTENERS
   // =============================================
-  /*
-  document.getElementById("sp-back-to-popup").addEventListener("click", () => {
-    try { chrome.storage.local.set({ ql_sidebar_mode: false }); } catch (e) {}
-    try { chrome.runtime.sendMessage({ action: "deactivateSidebar" }); } catch (e) {}
-    try { window.close(); } catch (e) {}
-  });
-*/
-  // =============================================
-  // BACK TO POPUP & THEME BUTTONS (Safe Check)
-  // =============================================
+  
+  // 1. Back to Popup Button
   const backToPopupBtn = document.getElementById("sp-back-to-popup");
   if (backToPopupBtn) {
     backToPopupBtn.addEventListener("click", () => {
@@ -236,6 +227,7 @@
     });
   }
 
+  // 2. Theme Toggle Button
   const themeBtn = document.querySelector(".sp-theme-btn");
   if (themeBtn) {
     themeBtn.addEventListener("click", () => {
@@ -243,61 +235,8 @@
       chrome.storage.local.set({ ql_dark_mode: !isLight });
     });
   }
-  // =============================================
-  // THEME TOGGLE BUTTON
-  // =============================================
- const themeBtn = document.querySelector(".sp-theme-btn");
-  if (themeBtn) {
-    themeBtn.addEventListener("click", () => {
-      const isLight = document.body.classList.toggle("sp-light");
-      chrome.storage.local.set({ ql_dark_mode: !isLight });
-    });
-  }
 
-  // =============================================
-  // LOGOUT BUTTON
-  // =============================================
-  /*
-  document.querySelector(".sp-logout-btn").addEventListener("click", async () => {
-    if (spHeartbeatInterval) clearInterval(spHeartbeatInterval);
-
-    // Deactivate bypass in content script
-    chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-      if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: "qlDeactivateBypass" });
-      }
-    });
-
-    // End session on server
-    try {
-      const stored = await new Promise(resolve => {
-        chrome.storage.local.get(["ql_session_id"], resolve);
-      });
-      if (stored.ql_session_id) {
-        await fetch(SP_SESSION_END_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ session_token: stored.ql_session_id })
-        });
-      }
-    } catch (error) {}
-
-    // Clear storage and show license gate
-    chrome.storage.local.remove([
-      "ql_license_valid", "ql_license_key", "ql_session_id",
-      "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
-    ], () => {
-      spUserName = null;
-      spExpiresAt = null;
-      spLicenseStatus = null;
-      spSessionId = null;
-      spShowLicenseGate();
-    });
-  });
-*/
-  // =============================================
-  // LOGOUT BUTTON (Safe Check)
-  // =============================================
+  // 3. Logout Button
   const logoutBtn = document.querySelector(".sp-logout-btn");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
@@ -334,88 +273,9 @@
       });
     });
   }
-  // =============================================
-  // NOTIFICATION PANEL
-  // =============================================
-  /* 
+
+  // 4. Notification Panel Handlers
   const spNotifPanel = document.getElementById("sp-notif-panel");
-
-  document.querySelector(".sp-notif-btn").addEventListener("click", event => {
-    event.stopPropagation();
-    const isOpen = spNotifPanel.style.display !== "none";
-    spNotifPanel.style.display = isOpen ? "none" : "block";
-    if (!isOpen) spLoadNotifications();
-  });
-
-  document.getElementById("sp-notif-close").addEventListener("click", () => {
-    spNotifPanel.style.display = "none";
-  });
-
-  document.getElementById("sp-notif-markread").addEventListener("click", async () => {
-    try {
-      const notifs = await spSafeProxyFetch(SP_NOTIFICATIONS_URL, {
-        method: "GET",
-        headers: { apikey: SP_SUPABASE_ANON_KEY }
-      });
-      if (notifs && notifs.length) {
-        chrome.storage.local.set({
-          ql_read_notifs: notifs.map(n => n.id)
-        });
-      }
-    } catch (error) {}
-
-    const badge = document.querySelector(".sp-notif-badge");
-    if (badge) badge.style.display = "none";
-    spNotifPanel.style.display = "none";
-  });
-
-  async function spLoadNotifications() {
-    const list = document.getElementById("sp-notif-list");
-    list.innerHTML = "<p class=\"sp-notif-empty\">Loading...</p>";
-
-    try {
-      const notifs = await spSafeProxyFetch(SP_NOTIFICATIONS_URL, {
-        method: "GET",
-        headers: { apikey: SP_SUPABASE_ANON_KEY }
-      });
-
-      if (!notifs || !notifs.length) {
-        list.innerHTML = "<p class=\"sp-notif-empty\">No notifications.</p>";
-        return;
-      }
-
-      chrome.storage.local.set({ ql_read_notifs: notifs.map(n => n.id) });
-
-      const badge = document.querySelector(".sp-notif-badge");
-      if (badge) badge.style.display = "none";
-
-      list.innerHTML = notifs.map(n => spTemplateNotifItem(n)).join("");
-    } catch (error) {
-      list.innerHTML = "<p class=\"sp-notif-empty\">Failed to load.</p>";
-    }
-  }
-
-  async function spCheckUnreadNotifications() {
-    try {
-      const notifs = await spSafeProxyFetch(SP_NOTIFICATIONS_URL, {
-        method: "GET",
-        headers: { apikey: SP_SUPABASE_ANON_KEY }
-      });
-      if (!notifs || !notifs.length) return;
-
-      chrome.storage.local.get(["ql_read_notifs"], stored => {
-        const readIds = stored.ql_read_notifs || [];
-        const unreadCount = notifs.filter(n => !readIds.includes(n.id)).length;
-        const badge = document.querySelector(".sp-notif-badge");
-        if (badge) {
-          badge.textContent = unreadCount;
-          badge.style.display = unreadCount > 0 ? "flex" : "none";
-        }
-      });
-    } catch (error) {}
-  }
-*/
-const spNotifPanel = document.getElementById("sp-notif-panel");
   const notifBtn = document.querySelector(".sp-notif-btn");
   const notifCloseBtn = document.getElementById("sp-notif-close");
   const notifMarkReadBtn = document.getElementById("sp-notif-markread");
@@ -454,6 +314,7 @@ const spNotifPanel = document.getElementById("sp-notif-panel");
       spNotifPanel.style.display = "none";
     });
   }
+ 
   // =============================================
   // UPDATE CHECK
   // =============================================
