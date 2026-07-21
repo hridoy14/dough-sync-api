@@ -1971,3 +1971,40 @@ html, body {
   border-radius: 14px !important;
   box-shadow: 0 4px 20px rgba(0,0,0,0.6) !important;
 }
+/* ============================================= */
+/* FORCE LAYOUT FLEX & PUSH INPUT TO BOTTOM      */
+/* ============================================= */
+
+/* 1. MAKE MAIN BODY FLEX CONTAINER */
+.sp-body {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  padding: 12px !important;
+  justify-content: flex-start !important;
+}
+
+/* 2. MAKE TAB CONTENT FILL REMAINING HEIGHT */
+#sp-tab-content {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  justify-content: flex-end !important;
+  margin-top: auto !important;
+  min-height: 0 !important;
+}
+
+/* 3. CHAT CONTAINER SET TO BOTTOM */
+.sp-chat-container {
+  margin-top: auto !important;
+  background: #141419 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 14px !important;
+  padding: 10px 12px !important;
+}
+
+/* 4. SHORTCUTS GRID FIT AT BOTTOM */
+.sp-shortcuts-grid {
+  margin-top: 8px !important;
+}
