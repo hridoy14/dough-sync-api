@@ -719,26 +719,23 @@ function spTemplatePromptContent() {
    // '<div class="sp-shortcuts-grid" id="sp-chips"></div>'
  // );
 //}
+
 /**
- * Returns HTML for the prompt tab content area (10/10 Pro UI with Popover + Vector Mic).
- /**
- * Returns HTML for the prompt tab content area (10/10 Pro Editor UI - Clean Bottom).
-/**
- * Returns HTML for the prompt tab content area (With Live Conversation Feed).
+ * Returns HTML for the prompt tab content area (10/10 Clean Layout).
  * @returns {string} - Prompt content HTML
  */
 function spTemplatePromptContent() {
   return (
-    // ১. কনভারসেশন ফিড (যা মাঝখানের পুরো খালি জায়গা দখল করবে ও হিস্ট্রি দেখাবে)
+    // ১. মাঝখানের সম্পূর্ণ কনভারসেশন ফিড (যেখানে চ্যাট হিস্ট্রি থাকবে)
     '<div class="sp-chat-feed" id="sp-chat-feed"></div>' +
 
-    // ২. চ্যাট ইনপুট বক্স (একেবারে স্ক্রিনের ফুটারে থাকবে)
+    // ২. একদম ফুটারে ফিক্সড চ্যাট ইনপুট বক্স
     '<div class="sp-chat-container">' +
       '<textarea class="sp-textarea sp-chat-textarea" id="sp-msg" rows="3" placeholder="' + t("prompt.placeholder") + '" spellcheck="false"></textarea>' +
       '<div id="sp-attach-preview" class="sp-attach-preview" style="display:none"></div>' +
 
       '<div class="sp-chat-toolbar">' +
-        // Left: Plus (+) Tools Icon & Flash (⚡) Shortcuts Icon
+        // Left Triggers (+ and ⚡ Icons)
         '<div class="sp-toolbar-left">' +
           '<div class="sp-plus-btn-group">' +
             '<button class="sp-plus-btn" id="sp-plus-trigger" type="button" title="Tools & Actions">+</button>' +
@@ -779,7 +776,7 @@ function spTemplatePromptContent() {
         '</div>' +
       '</div>' +
 
-      // POPUP 1: Actions Menu (Triggered by + Icon)
+      // POPUP 1: Tools & Actions (+) Menu
       '<div class="sp-menu-popover" id="sp-popover-menu" style="display:none;">' +
         '<button id="sp-shield-btn" type="button" class="sp-menu-item">🛡️ <span id="sp-shield-label">' + t("btn.shield.on") + '</span></button>' +
         '<button id="sp-native-chat-btn" type="button" class="sp-menu-item">💬 <span id="sp-native-chat-label">' + t("btn.nativeChat") + '</span></button>' +
@@ -790,7 +787,7 @@ function spTemplatePromptContent() {
         '<button id="sp-attach-btn" type="button" class="sp-menu-item">📎 <span>' + t("btn.attach.short") + '</span></button>' +
       '</div>' +
 
-      // POPUP 2: Quick Shortcuts (Triggered by ⚡ Icon)
+      // POPUP 2: Quick Shortcuts (⚡) Menu
       '<div class="sp-menu-popover" id="sp-shortcuts-popover-menu" style="display:none; left:48px;">' +
         '<div class="sp-shortcuts-grid" id="sp-chips"></div>' +
       '</div>' +
