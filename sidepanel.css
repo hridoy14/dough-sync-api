@@ -1672,13 +1672,7 @@ html, body {
 }
 
 /* TAB CONTENT FILL */
-#sp-tab-content {
-  flex: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  min-height: 0 !important;
-  justify-content: space-between !important;
-}
+
 
 /* CONVERSATION FEED (Fills Middle) */
 .sp-chat-feed {
