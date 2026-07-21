@@ -1641,15 +1641,6 @@ html, body {
   font-family: 'Plus Jakarta Sans', -apple-system, sans-serif !important;
 }
 
-/* MAIN BODY CONTAINER */
-.sp-body {
-  flex: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  height: 100vh !important;
-  padding: 10px !important;
-  overflow: hidden !important;
-}
 
 /* PROFILE CARD HEADER */
 .sp-profile-card {
