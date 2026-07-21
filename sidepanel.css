@@ -2008,3 +2008,46 @@ html, body {
 .sp-shortcuts-grid {
   margin-top: 8px !important;
 }
+
+/* ============================================= */
+/* 10/10 FLEX EXPANSION & ABSOLUTE BOTTOM INPUT  */
+/* ============================================= */
+
+body {
+  height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.sp-body {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding: 10px !important;
+}
+
+#sp-tab-content {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  justify-content: space-between !important;
+}
+
+.sp-chat-feed {
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  margin-bottom: 8px !important;
+}
+
+.sp-chat-container {
+  margin-top: auto !important;
+  flex-shrink: 0 !important;
+}
