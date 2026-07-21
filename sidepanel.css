@@ -519,46 +519,6 @@ html, body {
 }
 
 
-
-/* PROFILE CARD HEADER */
-.sp-profile-card {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 12px !important;
-  padding: 8px 12px !important;
-  margin-bottom: 8px !important;
-  flex-shrink: 0 !important;
-}
-
-.sp-profile-top {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-}
-
-.sp-username-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.sp-sync-badge {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 9.5px;
-  color: #34d399;
-}
-
-.sp-sync-pulse {
-  width: 6px; height: 6px; border-radius: 50%; background: #34d399; box-shadow: 0 0 8px #34d399;
-}
-
-/* TAB CONTENT FILL */
-
-
 /* CONVERSATION FEED (Fills Middle) */
 .sp-chat-feed {
   flex: 1 !important;
