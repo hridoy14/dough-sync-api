@@ -599,8 +599,9 @@
         statusBadge +
         "</div>" +
         //SP_SVG.clock + t("sync.waiting") +
-        "<div class=\"sp-sync-status\" id=\"sp-sync\">" + SP_SVG.clock + t("sync.waiting") + "</div>" +
-        "</div>" +
+        //"<div class=\"sp-sync-status\" id=\"sp-sync\">" + SP_SVG.clock + t("sync.waiting") + "</div>" +
+        "<div class=\"sp-sync-status\" id=\"sp-sync\"><span class=\"sp-sync-pulse\"></span> <span>" + SP_SVG.clock + t("sync.waiting") + "</span></div>" +
+       // "</div>" +
         // spTemplateTabs(spActiveTab, spChatHistory.length) +
         "<div id=\"sp-tab-content\"></div>";
 
@@ -766,14 +767,17 @@
     // =============================================
   // PROMPT CONTENT & CONVERSATION FEED (10/10 Pro)
   // =============================================
+  // =============================================
+  // PROMPT CONTENT & CONVERSATION FEED (10/10 Pro)
+  // =============================================
   function spRenderPromptContent() {
     const content = document.getElementById("sp-tab-content");
     if (!content) return;
 
-    // টেমপ্লেট থেকে চ্যাট ফিড ও বটম ইনপুট বক্স লোড করা
+    // টেমপ্লেট থেকে চ্যাট ফিড কন্টেইনার ও বটম ইনপুট লোড করা
     content.innerHTML = spTemplatePromptContent();
 
-    // লাইভ চ্যাট মেসেজ ফিডে দেখানো
+    // চ্যাট ফিডে মেসেজ হিস্ট্রি রেন্ডার করা
     spRenderChatFeed();
 
     // 1. Plus (+) Tools Popover Toggle
@@ -802,7 +806,7 @@
       };
     }
 
-    // স্ক্রিনের যেকোনো জায়গায় ক্লিক করলে দুইটা মেনুই বন্ধ হওয়া
+    // স্ক্রিনের যেকোনো জায়গায় ক্লিক করলে দুইটা মেনুই অটো বন্ধ হওয়া
     document.onclick = function() {
       if (popoverMenu) popoverMenu.style.display = "none";
       if (shortcutsMenu) shortcutsMenu.style.display = "none";
@@ -820,7 +824,8 @@
         chip.title = template.prompt;
         chip.onclick = function(e) {
           e.stopPropagation();
-          document.getElementById("sp-msg").value = template.prompt;
+          const msgBox = document.getElementById("sp-msg");
+          if (msgBox) msgBox.value = template.prompt;
           if (shortcutsMenu) shortcutsMenu.style.display = "none";
         };
         chipsContainer.appendChild(chip);
@@ -852,7 +857,7 @@
     spSetupQuickInit();
   }
 
-  // চ্যাট হিস্ট্রি ফিডে দেখানোর ফাংশন
+  // চ্যাট হিস্ট্রি ফিডে দেখানোর ফাংশন (Live Conversation Feed)
   function spRenderChatFeed() {
     const feed = document.getElementById("sp-chat-feed");
     if (!feed) return;
