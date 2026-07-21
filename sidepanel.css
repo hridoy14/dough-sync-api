@@ -273,7 +273,7 @@ body.sp-light .sp-brand-logo {
 
 /* ============================================= */
 /* BODY CONTAINER                                */
-/* ============================================= */
+/* ============================================= 
 .sp-body {
   flex: 1 !important;
   display: flex !important;
@@ -281,7 +281,7 @@ body.sp-light .sp-brand-logo {
   min-height: 0 !important;
   padding: 10px !important;
   overflow: hidden !important;
-}
+}*/
 /* ============================================= */
 /* LICENSE GATE (Login Screen)                   */
 /* ============================================= */
@@ -1555,13 +1555,6 @@ body {
 /* 10/10 PRO LOVABLE GLASS UI OVERRIDES          */
 /* ============================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
-  background: #08080a !important;
-  color: #f8fafc !important;
-}
 
 /* HEADER & PROFILE */
 .sp-header {
