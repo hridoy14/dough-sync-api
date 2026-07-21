@@ -1898,3 +1898,76 @@ body {
 .sp-chat-container {
   margin-top: auto !important;
 }
+/* ============================================= */
+/* ABSOLUTE BOTTOM INPUT BOX & SINGLE HEADER FIX */
+/* ============================================= */
+
+html, body {
+  height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+/* 1. TOP HEADER CLEANUP */
+.sp-header {
+  padding: 8px 12px !important;
+  background: #121215 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.sp-brand-text {
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+.ql-lang-sw {
+  display: flex !important;
+  gap: 2px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  padding: 2px !important;
+  border-radius: 6px !important;
+}
+
+.ql-lang-btn {
+  font-size: 9px !important;
+  padding: 2px 5px !important;
+  border: none !important;
+  border-radius: 4px !important;
+  color: #a1a1aa !important;
+  background: transparent !important;
+}
+
+.ql-lang-btn.ql-lang-active {
+  background: #6366f1 !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+
+/* 2. FORCE INPUT BOX TO ABSOLUTE BOTTOM */
+.sp-body {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: calc(100vh - 90px) !important;
+  padding: 12px !important;
+  overflow-y: auto !important;
+}
+
+#sp-tab-content {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  justify-content: flex-end !important;
+  margin-top: auto !important;
+}
+
+.sp-chat-container {
+  margin-top: auto !important;
+  background: #18181b !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6) !important;
+}
