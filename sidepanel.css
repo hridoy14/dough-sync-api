@@ -84,16 +84,7 @@ body.sp-light {
 /* ============================================= */
 /* BODY & BASE STYLES                            */
 /* ============================================= */
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--ql-bg);
-  color: var(--ql-text-primary);
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: sp-fade-in 0.4s ease-out;
-}
+
 
 /* ============================================= */
 /* ANIMATIONS                                    */
@@ -1632,14 +1623,23 @@ body {
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  height: 100vh !important;
-  display: flex !important;
+  height: 100vh ;
+ 
   flex-direction: column !important;
   overflow: hidden !important;
   background: #08080a !important;
   color: #f8fafc !important;
   font-family: 'Plus Jakarta Sans', -apple-system, sans-serif !important;
+  
+  background: var(--ql-bg);
+  color: var(--ql-text-primary);
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+ 
 }
+
 
 
 /* PROFILE CARD HEADER */
