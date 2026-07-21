@@ -217,12 +217,32 @@
   // =============================================
   // BACK TO POPUP BUTTON
   // =============================================
+  /*
   document.getElementById("sp-back-to-popup").addEventListener("click", () => {
     try { chrome.storage.local.set({ ql_sidebar_mode: false }); } catch (e) {}
     try { chrome.runtime.sendMessage({ action: "deactivateSidebar" }); } catch (e) {}
     try { window.close(); } catch (e) {}
   });
+*/
+  // =============================================
+  // BACK TO POPUP & THEME BUTTONS (Safe Check)
+  // =============================================
+  const backToPopupBtn = document.getElementById("sp-back-to-popup");
+  if (backToPopupBtn) {
+    backToPopupBtn.addEventListener("click", () => {
+      try { chrome.storage.local.set({ ql_sidebar_mode: false }); } catch (e) {}
+      try { chrome.runtime.sendMessage({ action: "deactivateSidebar" }); } catch (e) {}
+      try { window.close(); } catch (e) {}
+    });
+  }
 
+  const themeBtn = document.querySelector(".sp-theme-btn");
+  if (themeBtn) {
+    themeBtn.addEventListener("click", () => {
+      const isLight = document.body.classList.toggle("sp-light");
+      chrome.storage.local.set({ ql_dark_mode: !isLight });
+    });
+  }
   // =============================================
   // THEME TOGGLE BUTTON
   // =============================================
@@ -234,6 +254,7 @@
   // =============================================
   // LOGOUT BUTTON
   // =============================================
+  /*
   document.querySelector(".sp-logout-btn").addEventListener("click", async () => {
     if (spHeartbeatInterval) clearInterval(spHeartbeatInterval);
 
@@ -270,7 +291,46 @@
       spShowLicenseGate();
     });
   });
+*/
+  // =============================================
+  // LOGOUT BUTTON (Safe Check)
+  // =============================================
+  const logoutBtn = document.querySelector(".sp-logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      if (spHeartbeatInterval) clearInterval(spHeartbeatInterval);
 
+      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+        if (tabs[0]) {
+          chrome.tabs.sendMessage(tabs[0].id, { action: "qlDeactivateBypass" });
+        }
+      });
+
+      try {
+        const stored = await new Promise(resolve => {
+          chrome.storage.local.get(["ql_session_id"], resolve);
+        });
+        if (stored.ql_session_id) {
+          await fetch(SP_SESSION_END_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session_token: stored.ql_session_id })
+          });
+        }
+      } catch (error) {}
+
+      chrome.storage.local.remove([
+        "ql_license_valid", "ql_license_key", "ql_session_id",
+        "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
+      ], () => {
+        spUserName = null;
+        spExpiresAt = null;
+        spLicenseStatus = null;
+        spSessionId = null;
+        spShowLicenseGate();
+      });
+    });
+  }
   // =============================================
   // NOTIFICATION PANEL
   // =============================================
