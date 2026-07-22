@@ -590,81 +590,147 @@
         });*/
         
         // Listen for build error events from WebSocket
+      
+        // Listen for build error events from WebSocket
         ws.addEventListener("message", async (event) => {
           try {
             const isBinary = event.data instanceof ArrayBuffer || event.data instanceof Blob;
-            const displayData = typeof event.data === "string" ? event.data.slice(0, 300) : "[binary " + (event.data.byteLength || event.data.size || "?") + " bytes]";
+            const byteSize = isBinary ? (event.data.byteLength || event.data.size || 0) : 0;
+            const displayData = typeof event.data === "string"
+              ? event.data.slice(0, 300)
+              : "[binary " + byteSize + " bytes]";
             console.log("[MasterLovableHook] WS RECV [" + sanitizedUrl.slice(0, 60) + "] ←", displayData);
 
-            // =============================================
-            // ✅ FIX: Decompress binary messages (deflate-raw)
-            // Lovable sends trajectory events as compressed binary
-            // We need to decompress them to find build errors
-            // =============================================
             let dataStr = null;
 
             if (typeof event.data === "string") {
+              // String message — use directly
               dataStr = event.data;
-            } else if (isBinary) {
+            } else if (isBinary && byteSize > 5) {
+              // Binary message — try multiple decode methods
+              let buffer;
               try {
-                // Convert to ArrayBuffer if Blob
-                let buffer;
                 if (event.data instanceof Blob) {
                   buffer = await event.data.arrayBuffer();
                 } else {
                   buffer = event.data;
                 }
+              } catch (e) {
+                console.warn("[MasterLovableHook] ⚠️ Buffer read error:", e.message);
+                return;
+              }
 
-                // Try DecompressionStream API (Chrome 80+)
-                if (typeof DecompressionStream !== "undefined") {
+              // Method 1: Try plain TextDecoder first (maybe already decompressed by WS layer)
+              try {
+                const plainText = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+                // Check if it looks like valid JSON
+                if (plainText && (plainText.trim().startsWith("{") || plainText.trim().startsWith("["))) {
+                  dataStr = plainText;
+                  console.log("[MasterLovableHook] 📦 Binary decoded as plain text:", dataStr.slice(0, 200));
+                }
+              } catch (e) {}
+
+              // Method 2: Try DecompressionStream "deflate-raw"
+              if (!dataStr && typeof DecompressionStream !== "undefined") {
+                try {
                   const ds = new DecompressionStream("deflate-raw");
                   const stream = new Blob([buffer]).stream().pipeThrough(ds);
                   dataStr = await new Response(stream).text();
-                } else {
-                  // Fallback: try raw text decode
-                  dataStr = new TextDecoder().decode(buffer);
+                  if (dataStr && dataStr.length > 5) {
+                    console.log("[MasterLovableHook] 📦 Decompressed (deflate-raw):", dataStr.slice(0, 200));
+                  } else {
+                    dataStr = null;
+                  }
+                } catch (e) {
+                  console.log("[MasterLovableHook] ⚠️ deflate-raw failed:", e.message);
                 }
+              }
 
-                if (dataStr && dataStr.length > 10) {
-                  console.log("[MasterLovableHook] 📦 Binary decompressed:", dataStr.slice(0, 200));
-                }
-              } catch (decompressError) {
-                // Try TextDecoder as last resort
+              // Method 3: Try DecompressionStream "deflate" (with zlib header)
+              if (!dataStr && typeof DecompressionStream !== "undefined") {
                 try {
-                  dataStr = new TextDecoder().decode(
-                    event.data instanceof Blob ? await event.data.arrayBuffer() : event.data
-                  );
+                  const ds = new DecompressionStream("deflate");
+                  const stream = new Blob([buffer]).stream().pipeThrough(ds);
+                  dataStr = await new Response(stream).text();
+                  if (dataStr && dataStr.length > 5) {
+                    console.log("[MasterLovableHook] 📦 Decompressed (deflate):", dataStr.slice(0, 200));
+                  } else {
+                    dataStr = null;
+                  }
+                } catch (e) {
+                  console.log("[MasterLovableHook] ⚠️ deflate failed:", e.message);
+                }
+              }
+
+              // Method 4: Try DecompressionStream "gzip"
+              if (!dataStr && typeof DecompressionStream !== "undefined") {
+                try {
+                  const ds = new DecompressionStream("gzip");
+                  const stream = new Blob([buffer]).stream().pipeThrough(ds);
+                  dataStr = await new Response(stream).text();
+                  if (dataStr && dataStr.length > 5) {
+                    console.log("[MasterLovableHook] 📦 Decompressed (gzip):", dataStr.slice(0, 200));
+                  } else {
+                    dataStr = null;
+                  }
+                } catch (e) {
+                  console.log("[MasterLovableHook] ⚠️ gzip failed:", e.message);
+                }
+              }
+
+              // Method 5: Force TextDecoder (non-fatal, show raw bytes)
+              if (!dataStr) {
+                try {
+                  const raw = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+                  console.log("[MasterLovableHook] ⚠️ All decompress failed. Raw bytes (first 100):", raw.slice(0, 100));
+                  console.log("[MasterLovableHook] ⚠️ First 10 bytes hex:", Array.from(new Uint8Array(buffer).slice(0, 10)).map(b => b.toString(16).padStart(2, "0")).join(" "));
+                  dataStr = raw;
                 } catch (e) {}
               }
             }
 
             // =============================================
-            // Capture build error event ID (from string OR decompressed binary)
+            // Capture build error event ID
             // =============================================
-            if (dataStr && dataStr.includes("#bld:") && dataStr.includes("hasError")) {
+            if (dataStr && dataStr.includes("#bld:")) {
+              console.log("[MasterLovableHook] 🔍 Found #bld: in data! Length:", dataStr.length);
+            }
+
+            if (dataStr && dataStr.includes("hasError")) {
+              console.log("[MasterLovableHook] 🔍 Found hasError in data!");
+            }
+
+            if (dataStr && (dataStr.includes("#bld:") || dataStr.includes("hasError") || dataStr.includes("buildErrors"))) {
               try {
-                // Handle JSON array (trajectory sends arrays of events)
                 let parsed;
                 const trimmed = dataStr.trim();
+
                 if (trimmed.startsWith("[")) {
                   const arr = JSON.parse(trimmed);
-                  // Find the build error event in the array
                   for (const item of arr) {
-                    if (item && item.type === "trajectory" && item.event && item.event.id) {
+                    if (item && item.event && item.event.id) {
                       parsed = item;
                       break;
                     }
                   }
-                  if (!parsed) parsed = arr[0];
-                } else {
+                  if (!parsed && arr.length > 0) parsed = arr[0];
+                } else if (trimmed.startsWith("{")) {
                   parsed = JSON.parse(trimmed);
                 }
 
-                if (parsed && parsed.event && parsed.event.id && parsed.event.payload) {
-                  const eventIdValue = parsed.event.id.value || parsed.event.id || "";
-                  const buildPayload = parsed.event.payload.build;
+                if (parsed) {
+                  // Check nested structures
+                  const eventIdValue = parsed.event && parsed.event.id
+                    ? (parsed.event.id.value || parsed.event.id)
+                    : "";
 
-                  if (String(eventIdValue).includes("#bld:") && buildPayload) {
+                  const payload = parsed.event && parsed.event.payload
+                    ? parsed.event.payload
+                    : parsed.payload || null;
+
+                  const buildPayload = payload && payload.build ? payload.build : null;
+
+                  if (buildPayload) {
                     const typecheck = buildPayload.buildErrors && buildPayload.buildErrors.typecheck;
                     const runtime = buildPayload.buildErrors && buildPayload.buildErrors.runtime;
 
@@ -679,45 +745,34 @@
                       errorMessage = (runtime.output || "").trim().split("\n")[0];
                     }
 
-                    if (hasError && errorMessage) {
+                    if (hasError) {
                       window.__qlBuildState = {
-                        eventId: eventIdValue,
+                        eventId: String(eventIdValue),
                         errorMessage: errorMessage
                       };
                       console.log("[MasterLovableHook] 📐 build_event_id capturado:", eventIdValue, "|", errorMessage.slice(0, 80));
                     }
                   }
-                }
-              } catch (parseError) {
-                console.warn("[MasterLovableHook] Binary parse error:", parseError.message);
-              }
-            }
 
-            // =============================================
-            // Also check for credit_total updates
-            // =============================================
-            if (dataStr && dataStr.includes("credit_total")) {
-              try {
-                const parsed = JSON.parse(dataStr.trim().startsWith("[") ? dataStr.trim() : dataStr);
-                const items = Array.isArray(parsed) ? parsed : [parsed];
-                for (const item of items) {
-                  if (item && item.ops) {
-                    for (const op of item.ops) {
+                  // Also check for credit_total in realtime patches
+                  if (parsed.ops || (parsed.payload && parsed.payload.ops)) {
+                    const ops = parsed.ops || (parsed.payload && parsed.payload.ops) || [];
+                    for (const op of ops) {
                       if (op.path && op.path.includes("credit_total")) {
                         console.log("[MasterLovableHook] 💰 Credit update:", op.value, "(" + op.op + ")");
                       }
                     }
                   }
                 }
-              } catch (e) {}
+              } catch (parseError) {
+                console.warn("[MasterLovableHook] ⚠️ JSON parse error:", parseError.message, "| data:", dataStr.slice(0, 100));
+              }
             }
 
-          } catch (error) {}
+          } catch (error) {
+            console.warn("[MasterLovableHook] ⚠️ WS message handler error:", error.message);
+          }
         });
-
-
-        return ws;
-      }
 
 
 
