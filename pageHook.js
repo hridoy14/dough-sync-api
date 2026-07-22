@@ -13,7 +13,14 @@
   window.__qlLastMessage = "";
   window.__qlFixTimer = null;
 
-  let bypassActive = false;            // whether bypass is active
+  let bypassActive = true;        
+  try {
+    if (localStorage.getItem("__ql_bypass_active") === "1") {
+      bypassActive = true;
+      console.log("[MasterLovableHook] ✅ Bypass auto-activated from localStorage");
+    }
+  } catch (e) {}
+      // whether bypass is active
   let cachedToken = null;              // cached auth token
   let cachedProjectId = null;          // cached project ID
   let openWebSockets = [];             // list of active WebSocket connections
