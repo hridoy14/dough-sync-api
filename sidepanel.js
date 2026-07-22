@@ -213,106 +213,144 @@
     overlay.querySelector(".sp-alert-ok").addEventListener("click", () => overlay.remove());
     setTimeout(() => overlay.remove(), 4000);
   }
+
   // =============================================
-  // SAFE HEADER & FOOTER EVENT LISTENERS
+  // BACK TO POPUP BUTTON
   // =============================================
-  
-  // 1. Back to Popup Button
-  if (document.getElementById("sp-back-to-popup")) {
-    document.getElementById("sp-back-to-popup").onclick = function() {
-      try { chrome.storage.local.set({ ql_sidebar_mode: false }); } catch (e) {}
-      try { chrome.runtime.sendMessage({ action: "deactivateSidebar" }); } catch (e) {}
-      try { window.close(); } catch (e) {}
-    };
-  }
-  // 2. Theme Toggle Button
-  const themeBtn = document.querySelector(".sp-theme-btn");
-  if (themeBtn) {
-    themeBtn.addEventListener("click", () => {
-      const isLight = document.body.classList.toggle("sp-light");
-      chrome.storage.local.set({ ql_dark_mode: !isLight });
+  document.getElementById("sp-back-to-popup").addEventListener("click", () => {
+    try { chrome.storage.local.set({ ql_sidebar_mode: false }); } catch (e) {}
+    try { chrome.runtime.sendMessage({ action: "deactivateSidebar" }); } catch (e) {}
+    try { window.close(); } catch (e) {}
+  });
+
+  // =============================================
+  // THEME TOGGLE BUTTON
+  // =============================================
+  document.querySelector(".sp-theme-btn").addEventListener("click", () => {
+    const isLight = document.body.classList.toggle("sp-light");
+    chrome.storage.local.set({ ql_dark_mode: !isLight });
+  });
+
+  // =============================================
+  // LOGOUT BUTTON
+  // =============================================
+  document.querySelector(".sp-logout-btn").addEventListener("click", async () => {
+    if (spHeartbeatInterval) clearInterval(spHeartbeatInterval);
+
+    // Deactivate bypass in content script
+    chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+      if (tabs[0]) {
+        chrome.tabs.sendMessage(tabs[0].id, { action: "qlDeactivateBypass" });
+      }
     });
-  }
 
-  // 3. Logout Button
-  const logoutBtn = document.querySelector(".sp-logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      if (spHeartbeatInterval) clearInterval(spHeartbeatInterval);
-
-      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-        if (tabs[0]) {
-          chrome.tabs.sendMessage(tabs[0].id, { action: "qlDeactivateBypass" });
-        }
+    // End session on server
+    try {
+      const stored = await new Promise(resolve => {
+        chrome.storage.local.get(["ql_session_id"], resolve);
       });
-
-      try {
-        const stored = await new Promise(resolve => {
-          chrome.storage.local.get(["ql_session_id"], resolve);
+      if (stored.ql_session_id) {
+        await fetch(SP_SESSION_END_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_token: stored.ql_session_id })
         });
-        if (stored.ql_session_id) {
-          await fetch(SP_SESSION_END_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ session_token: stored.ql_session_id })
-          });
-        }
-      } catch (error) {}
+      }
+    } catch (error) {}
 
-      chrome.storage.local.remove([
-        "ql_license_valid", "ql_license_key", "ql_session_id",
-        "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
-      ], () => {
-        spUserName = null;
-        spExpiresAt = null;
-        spLicenseStatus = null;
-        spSessionId = null;
-        spShowLicenseGate();
-      });
+    // Clear storage and show license gate
+    chrome.storage.local.remove([
+      "ql_license_valid", "ql_license_key", "ql_session_id",
+      "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
+    ], () => {
+      spUserName = null;
+      spExpiresAt = null;
+      spLicenseStatus = null;
+      spSessionId = null;
+      spShowLicenseGate();
     });
-  }
+  });
 
-  // 4. Notification Panel Handlers
+  // =============================================
+  // NOTIFICATION PANEL
+  // =============================================
   const spNotifPanel = document.getElementById("sp-notif-panel");
-  const notifBtn = document.querySelector(".sp-notif-btn");
-  const notifCloseBtn = document.getElementById("sp-notif-close");
-  const notifMarkReadBtn = document.getElementById("sp-notif-markread");
 
-  if (notifBtn && spNotifPanel) {
-    notifBtn.addEventListener("click", event => {
-      event.stopPropagation();
-      const isOpen = spNotifPanel.style.display !== "none";
-      spNotifPanel.style.display = isOpen ? "none" : "block";
-      if (!isOpen) spLoadNotifications();
-    });
-  }
+  document.querySelector(".sp-notif-btn").addEventListener("click", event => {
+    event.stopPropagation();
+    const isOpen = spNotifPanel.style.display !== "none";
+    spNotifPanel.style.display = isOpen ? "none" : "block";
+    if (!isOpen) spLoadNotifications();
+  });
 
-  if (notifCloseBtn && spNotifPanel) {
-    notifCloseBtn.addEventListener("click", () => {
-      spNotifPanel.style.display = "none";
-    });
-  }
+  document.getElementById("sp-notif-close").addEventListener("click", () => {
+    spNotifPanel.style.display = "none";
+  });
 
-  if (notifMarkReadBtn && spNotifPanel) {
-    notifMarkReadBtn.addEventListener("click", async () => {
-      try {
-        const notifs = await spSafeProxyFetch(SP_NOTIFICATIONS_URL, {
-          method: "GET",
-          headers: { apikey: SP_SUPABASE_ANON_KEY }
+  document.getElementById("sp-notif-markread").addEventListener("click", async () => {
+    try {
+      const notifs = await spSafeProxyFetch(SP_NOTIFICATIONS_URL, {
+        method: "GET",
+        headers: { apikey: SP_SUPABASE_ANON_KEY }
+      });
+      if (notifs && notifs.length) {
+        chrome.storage.local.set({
+          ql_read_notifs: notifs.map(n => n.id)
         });
-        if (notifs && notifs.length) {
-          chrome.storage.local.set({
-            ql_read_notifs: notifs.map(n => n.id)
-          });
-        }
-      } catch (error) {}
+      }
+    } catch (error) {}
+
+    const badge = document.querySelector(".sp-notif-badge");
+    if (badge) badge.style.display = "none";
+    spNotifPanel.style.display = "none";
+  });
+
+  async function spLoadNotifications() {
+    const list = document.getElementById("sp-notif-list");
+    list.innerHTML = "<p class=\"sp-notif-empty\">Loading...</p>";
+
+    try {
+      const notifs = await spSafeProxyFetch(SP_NOTIFICATIONS_URL, {
+        method: "GET",
+        headers: { apikey: SP_SUPABASE_ANON_KEY }
+      });
+
+      if (!notifs || !notifs.length) {
+        list.innerHTML = "<p class=\"sp-notif-empty\">No notifications.</p>";
+        return;
+      }
+
+      chrome.storage.local.set({ ql_read_notifs: notifs.map(n => n.id) });
 
       const badge = document.querySelector(".sp-notif-badge");
       if (badge) badge.style.display = "none";
-      spNotifPanel.style.display = "none";
-    });
+
+      list.innerHTML = notifs.map(n => spTemplateNotifItem(n)).join("");
+    } catch (error) {
+      list.innerHTML = "<p class=\"sp-notif-empty\">Failed to load.</p>";
+    }
   }
- 
+
+  async function spCheckUnreadNotifications() {
+    try {
+      const notifs = await spSafeProxyFetch(SP_NOTIFICATIONS_URL, {
+        method: "GET",
+        headers: { apikey: SP_SUPABASE_ANON_KEY }
+      });
+      if (!notifs || !notifs.length) return;
+
+      chrome.storage.local.get(["ql_read_notifs"], stored => {
+        const readIds = stored.ql_read_notifs || [];
+        const unreadCount = notifs.filter(n => !readIds.includes(n.id)).length;
+        const badge = document.querySelector(".sp-notif-badge");
+        if (badge) {
+          badge.textContent = unreadCount;
+          badge.style.display = unreadCount > 0 ? "flex" : "none";
+        }
+      });
+    } catch (error) {}
+  }
+
   // =============================================
   // UPDATE CHECK
   // =============================================
@@ -560,49 +598,27 @@
         "<span class=\"sp-profile-name\" id=\"sp-name\">" + userName + "</span>" +
         statusBadge +
         "</div>" +
-        //SP_SVG.clock + t("sync.waiting") +
-        //"<div class=\"sp-sync-status\" id=\"sp-sync\">" + SP_SVG.clock + t("sync.waiting") + "</div>" +
-        "<div class=\"sp-sync-status\" id=\"sp-sync\"><span class=\"sp-sync-pulse\"></span> <span>" + SP_SVG.clock + t("sync.waiting") + "</span></div>" +
-       // "</div>" +
-        // spTemplateTabs(spActiveTab, spChatHistory.length) +
+        SP_SVG.clock + t("sync.waiting") +
+        "</div>" +
+        spTemplateTabs(spActiveTab, spChatHistory.length) +
         "<div id=\"sp-tab-content\"></div>";
 
       // Tab click handlers
-     /* document.querySelectorAll(".sp-tab").forEach(tab => {
+      document.querySelectorAll(".sp-tab").forEach(tab => {
         tab.addEventListener("click", function () {
           spSwitchTab(tab.getAttribute("data-tab"));
         });
       });
-*/
+
       // Render active tab
-      /*
       if (spActiveTab === "history") {
         spRenderChatHistory();
       } else {
         spRenderPromptContent();
-      }*/
+      }
 
-      // সরাসরি চ্যাট ফিড ও ইনপুট বক্স রেন্ডার করা
-      spRenderPromptContent();
-      /*
       // Sync status
       spUpdateSyncStatus();
-      chrome.storage.onChanged.addListener(changes => {
-        if (changes.lovable_projectId || changes.lovable_token) {
-          spUpdateSyncStatus();
-        }
-      });
-*/
-      // Sync status & Active Token Request
-      spUpdateSyncStatus();
-      
-      // সাইডপ্যানেল ওপেন হলে সাথে সাথে অ্যাক্টিভ ট্যাবে টোকেন রিকোয়েস্ট পাঠাবে
-      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-        if (tabs[0] && tabs[0].id) {
-          chrome.tabs.sendMessage(tabs[0].id, { action: "qlRequestToken" }).catch(() => {});
-        }
-      });
-
       chrome.storage.onChanged.addListener(changes => {
         if (changes.lovable_projectId || changes.lovable_token) {
           spUpdateSyncStatus();
@@ -635,7 +651,6 @@
   // =============================================
   // PROMPT CONTENT (Main Prompt UI)
   // =============================================
-  /*
   function spRenderPromptContent() {
     const content = document.getElementById("sp-tab-content");
     if (!content) return;
@@ -657,25 +672,24 @@
           "<button class=\"sp-tool-btn\" id=\"sp-speech\" title=\"" + t("btn.speech.short") + "\">" + SP_SVG.mic + "</button>" +
           "<button class=\"sp-send-btn\" id=\"sp-send\">" + t("btn.send") + "</button>" +
         "</div>" +
-      "</div>" +*/
-      //"<input type=\"file\" id=\"sp-file-input\" multiple style=\"display:none\" accept=\"*/*\">" +
-      //"<div class=\"sp-log\" id=\"sp-log\"></div>" +
-     // "<span class=\"sp-shortcuts-title\">" + t("shortcuts.title") + "</span>" +
-     // "<div class=\"sp-shortcuts-grid\" id=\"sp-chips\"></div>" +
-      //"<button id=\"sp-remove-watermark\" class=\"sp-watermark-btn\">" + t("btn.watermark") + "</button>" +
-     // "<button id=\"sp-drop-down\" class=\"sp-watermark-btn\" style=\"display:none;\">Drop Down</button>" +
-     // "<button id=\"sp-shield-btn\" class=\"sp-shield-btn\">" +
-       // "<span id=\"sp-shield-label\">" + t("btn.shield.on") + "</span>" +
-     // "</button>" +
-      //"<button id=\"sp-native-chat-btn\" class=\"sp-shield-btn\" style=\"background:linear-gradient(135deg,rgba(124,90,255,0.12),rgba(168,85,247,0.08));border-color:rgba(124,90,255,0.3);color:var(--ql-accent,#67e8f9);margin-top:6px\">" +
-       // "<span id=\"sp-native-chat-label\">" + t("btn.nativeChat") + "</span>" +
-      //"</button>" +
-     // "<button id=\"sp-download-project\" class=\"sp-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(37,99,235,0.08));border-color:rgba(59,130,246,0.3);color:#60a5fa;margin-top:6px\">" + t("btn.download") + "</button>" +
-      //"<button id=\"sp-quick-init\" class=\"sp-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(250,204,21,0.12),rgba(234,179,8,0.08));border-color:rgba(250,204,21,0.35);color:#facc15;margin-top:6px\">Create New Project</button>" +
-     // "<div id=\"sp-download-status\" class=\"sp-log\" style=\"display:none\"></div>";
+      "</div>" +
+      "<input type=\"file\" id=\"sp-file-input\" multiple style=\"display:none\" accept=\"*/*\">" +
+      "<div class=\"sp-log\" id=\"sp-log\"></div>" +
+      "<span class=\"sp-shortcuts-title\">" + t("shortcuts.title") + "</span>" +
+      "<div class=\"sp-shortcuts-grid\" id=\"sp-chips\"></div>" +
+      "<button id=\"sp-remove-watermark\" class=\"sp-watermark-btn\">" + t("btn.watermark") + "</button>" +
+      "<button id=\"sp-drop-down\" class=\"sp-watermark-btn\" style=\"display:none;\">Drop Down</button>" +
+      "<button id=\"sp-shield-btn\" class=\"sp-shield-btn\">" +
+        "<span id=\"sp-shield-label\">" + t("btn.shield.on") + "</span>" +
+      "</button>" +
+      "<button id=\"sp-native-chat-btn\" class=\"sp-shield-btn\" style=\"background:linear-gradient(135deg,rgba(124,90,255,0.12),rgba(168,85,247,0.08));border-color:rgba(124,90,255,0.3);color:var(--ql-accent,#67e8f9);margin-top:6px\">" +
+        "<span id=\"sp-native-chat-label\">" + t("btn.nativeChat") + "</span>" +
+      "</button>" +
+      "<button id=\"sp-download-project\" class=\"sp-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(37,99,235,0.08));border-color:rgba(59,130,246,0.3);color:#60a5fa;margin-top:6px\">" + t("btn.download") + "</button>" +
+      "<button id=\"sp-quick-init\" class=\"sp-watermark-btn\" style=\"background:linear-gradient(135deg,rgba(250,204,21,0.12),rgba(234,179,8,0.08));border-color:rgba(250,204,21,0.35);color:#facc15;margin-top:6px\">Create New Project</button>" +
+      "<div id=\"sp-download-status\" class=\"sp-log\" style=\"display:none\"></div>";
 
     // Render chips (quick actions)
-    /*
     const chipsContainer = document.getElementById("sp-chips");
     SP_TEMPLATES.forEach(template => {
       const chip = document.createElement("button");
@@ -722,122 +736,6 @@
     spSetupNativeChat();
     spSetupDownloadProject();
     spSetupQuickInit();
-  }
-*/
-
-
-    // =============================================
-  // PROMPT CONTENT & CONVERSATION FEED (10/10 Pro)
-  // =============================================
-  // =============================================
-  // PROMPT CONTENT & CONVERSATION FEED (10/10 Pro)
-  // =============================================
-  function spRenderPromptContent() {
-    const content = document.getElementById("sp-tab-content");
-    if (!content) return;
-
-    // টেমপ্লেট থেকে চ্যাট ফিড কন্টেইনার ও বটম ইনপুট লোড করা
-    content.innerHTML = spTemplatePromptContent();
-
-    // চ্যাট ফিডে মেসেজ হিস্ট্রি রেন্ডার করা
-    spRenderChatFeed();
-
-    // 1. Plus (+) Tools Popover Toggle
-    const plusBtn = document.getElementById("sp-plus-trigger");
-    const popoverMenu = document.getElementById("sp-popover-menu");
-    
-    // 2. Flash (⚡) Shortcuts Popover Toggle
-    const shortcutsBtn = document.getElementById("sp-shortcuts-trigger");
-    const shortcutsMenu = document.getElementById("sp-shortcuts-popover-menu");
-
-    if (plusBtn && popoverMenu) {
-      plusBtn.onclick = function(event) {
-        event.stopPropagation();
-        if (shortcutsMenu) shortcutsMenu.style.display = "none";
-        const isHidden = popoverMenu.style.display === "none" || !popoverMenu.style.display;
-        popoverMenu.style.display = isHidden ? "flex" : "none";
-      };
-    }
-
-    if (shortcutsBtn && shortcutsMenu) {
-      shortcutsBtn.onclick = function(event) {
-        event.stopPropagation();
-        if (popoverMenu) popoverMenu.style.display = "none";
-        const isHidden = shortcutsMenu.style.display === "none" || !shortcutsMenu.style.display;
-        shortcutsMenu.style.display = isHidden ? "flex" : "none";
-      };
-    }
-
-    // স্ক্রিনের যেকোনো জায়গায় ক্লিক করলে দুইটা মেনুই অটো বন্ধ হওয়া
-    document.onclick = function() {
-      if (popoverMenu) popoverMenu.style.display = "none";
-      if (shortcutsMenu) shortcutsMenu.style.display = "none";
-    };
-
-    // ⚡ শর্টকাট আইটেমে ক্লিক করলে প্রম্পট ইনপুটে বসবে এবং মেনু বন্ধ হবে
-    const chipsContainer = document.getElementById("sp-chips");
-    if (chipsContainer && typeof SP_TEMPLATES !== "undefined") {
-      chipsContainer.innerHTML = "";
-      SP_TEMPLATES.forEach(template => {
-        const chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = "sp-chip";
-        chip.innerHTML = template.icon + " " + template.label;
-        chip.title = template.prompt;
-        chip.onclick = function(e) {
-          e.stopPropagation();
-          const msgBox = document.getElementById("sp-msg");
-          if (msgBox) msgBox.value = template.prompt;
-          if (shortcutsMenu) shortcutsMenu.style.display = "none";
-        };
-        chipsContainer.appendChild(chip);
-      });
-    }
-
-    // ইনপুট ইভেন্ট ও বাটন হ্যান্ডলারস
-    const msgInput = document.getElementById("sp-msg");
-    if (msgInput) {
-      msgInput.onkeydown = function (event) {
-        if (event.key === "Enter" && !event.shiftKey) {
-          event.preventDefault();
-          spHandleSendClick();
-        }
-      };
-    }
-
-    const sendBtn = document.getElementById("sp-send");
-    if (sendBtn) sendBtn.onclick = spHandleSendClick;
-
-    const optBtn = document.getElementById("sp-optimize");
-    if (optBtn) optBtn.onclick = spHandleOptimizeClick;
-
-    spSetupFileAttachment();
-    spSetupWatermarkButton();
-    spSetupShield();
-    spSetupNativeChat();
-    spSetupDownloadProject();
-    spSetupQuickInit();
-  }
-
-  // চ্যাট হিস্ট্রি ফিডে দেখানোর ফাংশন (Live Conversation Feed)
-  function spRenderChatFeed() {
-    const feed = document.getElementById("sp-chat-feed");
-    if (!feed) return;
-
-    if (!spChatHistory || !spChatHistory.length) {
-      feed.innerHTML = 
-        '<div style="text-align:center; padding:30px 10px; color:#64748b; font-size:11px;">' +
-          '💬 Conversation feed will appear here' +
-        '</div>';
-      return;
-    }
-
-    let html = "";
-    for (let i = 0; i < spChatHistory.length; i++) {
-      html += spTemplateChatBubble(spChatHistory[i]);
-    }
-    feed.innerHTML = html;
-    feed.scrollTop = feed.scrollHeight;
   }
 
   // =============================================
@@ -1816,7 +1714,7 @@
           )) {
             try {
               const rawResponse = await fetch(
-                "https://api.lovable.dev/projects/" + projectId + "/files/raw?path=" + encodeURIComponent(file.name) + "&ref=main",
+                "https://api.lovable.dev/projects/" + projectId + "/files/raw?path=" + encodeURIComponent(file.name),
                 {
                   method: "GET",
                   headers: { Authorization: "Bearer " + token, Accept: "*/*" },
@@ -2231,19 +2129,3 @@
   })();
 
 })();
-    // Plus (+) Button Click Event to Toggle Popover Menu
-    const plusBtn = document.getElementById("sp-plus-trigger");
-    const popoverMenu = document.getElementById("sp-popover-menu");
-
-    if (plusBtn && popoverMenu) {
-      plusBtn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        const isOpen = popoverMenu.style.display !== "none";
-        popoverMenu.style.display = isOpen ? "none" : "flex";
-      });
-
-      // স্ক্রিনের অন্য কোথাও ক্লিক করলে মেনু অটো বন্ধ হবে
-      document.addEventListener("click", () => {
-        popoverMenu.style.display = "none";
-      });
-    }
