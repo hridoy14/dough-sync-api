@@ -2643,7 +2643,7 @@ function _qlUlid() {
 function sendViaWs(message, projectId) {
   return new Promise(function (resolve, reject) {
     const payload = {
-      // type: "user_message", // ← এই line ADD করুন (সবার আগে)
+      //type: "user_message", // ← এই line ADD করুন (সবার আগে)
       id: "umsg_" + _qlUlid(),
       message: message,
       files: [],
@@ -3203,13 +3203,18 @@ try {
 // DOM injection — reliable, message will go
 await sendNativeToLovable(finalMessage);
 // WebSocket bypass in background — no credit charge
+// === FIX: Disable WS bypass, use DOM injection with fix_error ===
+// WS bypass Lovable-এর নতুন API-তে কাজ করছে না, তাই DOM-এ যাচ্ছি
+// কিন্তু pageHook.js fix_error inject করবে, তাই credit কাটবে না
+
 try {
-  const storageData = await new Promise(resolve =>
-    chrome.storage.local.get(["lovable_projectId"], resolve)
-  );
-  const projectId = storageData.lovable_projectId || null;
-  sendViaWs(finalMessage, projectId).catch(() => {});
-} catch (e) {}
+  // DOM injection - pageHook.js fix_error automatically apply করবে
+  await sendNativeToLovable(finalMessage);
+  console.log("[QL] Sent via DOM — pageHook.js applying fix_error bypass");
+} catch (domError) {
+  console.error("[QL] DOM injection failed:", domError);
+  throw domError;
+}
 
       if (log) {
         log.className = "ql-log-success";
