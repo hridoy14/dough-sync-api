@@ -590,7 +590,7 @@
         });*/
         
         // Listen for build error events from WebSocket
-      
+     
         // Listen for build error events from WebSocket
         ws.addEventListener("message", async (event) => {
           try {
@@ -773,6 +773,9 @@
             console.warn("[MasterLovableHook] ⚠️ WS message handler error:", error.message);
           }
         });
+
+        return ws;
+      }
 
 
 
