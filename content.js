@@ -3180,41 +3180,20 @@ function setupSend() {
         log.innerHTML = hasAttachments ? "📎 Sending with image..." : SVG_ICONS.clock + " Sending prompt...";
       }
 
-      sendBtn.classList.add("ql-sending");
-      sendBtn.disabled = true;
+    sendBtn.classList.add("ql-sending");
+    sendBtn.disabled = true;
 
-      //await sendNativeToLovable(finalMessage);
-
-
-     // First try WebSocket bypass (no credit charge)
-     /* 
-try {
-  const storageData = await new Promise(resolve => 
-    chrome.storage.local.get(["lovable_projectId"], resolve)
-  );
-  const lovable_projectId = storageData.lovable_projectId || null;
-  
-  await sendViaWs(finalMessage, lovable_projectId);
-} catch (wsError) {
-  // Fallback to DOM injection if WS fails
-  await sendNativeToLovable(finalMessage);
-}*/
-
-// DOM injection — reliable, message will go
-await sendNativeToLovable(finalMessage);
-// WebSocket bypass in background — no credit charge
-// === FIX: Disable WS bypass, use DOM injection with fix_error ===
-// WS bypass Lovable-এর নতুন API-তে কাজ করছে না, তাই DOM-এ যাচ্ছি
-// কিন্তু pageHook.js fix_error inject করবে, তাই credit কাটবে না
-
-try {
-  // DOM injection - pageHook.js fix_error automatically apply করবে
-  await sendNativeToLovable(finalMessage);
-  console.log("[QL] Sent via DOM — pageHook.js applying fix_error bypass");
-} catch (domError) {
+ // ✅ FIXED: Single DOM injection only
+ // pageHook.js will intercept POST /chat and inject fix_error intent
+    // This prevents double message sending and credit consumption
+  try {
+   await sendNativeToLovable(finalMessage);
+      console.log("[QL] Sent via DOM — pageHook.js applying fix_error bypass");
+ } catch (domError) {
   console.error("[QL] DOM injection failed:", domError);
-  throw domError;
-}
+       throw domError;
+    }
+
 
       if (log) {
         log.className = "ql-log-success";
