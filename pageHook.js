@@ -216,8 +216,12 @@
           const url = typeof args[0] === "string" ? args[0] : args[0] && args[0].url || "";
           const isRequestInstance = args[0] instanceof Request;
           const method = (isRequestInstance ? args[0].method || "GET" : (args[1] || {}).method || "GET").toUpperCase();
-          const isLovablePost = url && method === "POST" && (url.includes("api.lovable.dev") || url.includes("api.lovable.app") || url.includes("lovable-api.com") || url.includes("lovable.dev"));
-
+          //const isLovablePost = url && method === "POST" && (url.includes("api.lovable.dev") || url.includes("api.lovable.app") || url.includes("lovable-api.com") || url.includes("lovable.dev"));
+          // শুধু chat/trajectory endpoint এ bypass apply হবে
+const isLovablePost = url && method === "POST" && 
+  (url.includes("/chat") || url.includes("/trajectory") || url.includes("converse") || url.includes("messages")) &&
+  !url.includes("extend-lease") && 
+  !url.includes("credit-balance");
           if (isLovablePost) {
             if (isRequestInstance) {
               try {
