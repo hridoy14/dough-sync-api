@@ -51,6 +51,7 @@
   border-radius: 12px !important;
   padding: 10px 12px !important;
   backdrop-filter: blur(12px);
+  height:100%;
 }
 
 .sp-avatar {
