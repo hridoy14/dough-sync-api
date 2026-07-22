@@ -556,6 +556,7 @@
         };
 
         // Listen for build error events from WebSocket
+        /*
         ws.addEventListener("message", event => {
           try {
             const displayData = typeof event.data === "string" ? event.data.slice(0, 300) : "[binary]";
@@ -586,10 +587,139 @@
               } catch (error) {}
             }
           } catch (error) {}
+        });*/
+        
+        // Listen for build error events from WebSocket
+        ws.addEventListener("message", async (event) => {
+          try {
+            const isBinary = event.data instanceof ArrayBuffer || event.data instanceof Blob;
+            const displayData = typeof event.data === "string" ? event.data.slice(0, 300) : "[binary " + (event.data.byteLength || event.data.size || "?") + " bytes]";
+            console.log("[MasterLovableHook] WS RECV [" + sanitizedUrl.slice(0, 60) + "] ←", displayData);
+
+            // =============================================
+            // ✅ FIX: Decompress binary messages (deflate-raw)
+            // Lovable sends trajectory events as compressed binary
+            // We need to decompress them to find build errors
+            // =============================================
+            let dataStr = null;
+
+            if (typeof event.data === "string") {
+              dataStr = event.data;
+            } else if (isBinary) {
+              try {
+                // Convert to ArrayBuffer if Blob
+                let buffer;
+                if (event.data instanceof Blob) {
+                  buffer = await event.data.arrayBuffer();
+                } else {
+                  buffer = event.data;
+                }
+
+                // Try DecompressionStream API (Chrome 80+)
+                if (typeof DecompressionStream !== "undefined") {
+                  const ds = new DecompressionStream("deflate-raw");
+                  const stream = new Blob([buffer]).stream().pipeThrough(ds);
+                  dataStr = await new Response(stream).text();
+                } else {
+                  // Fallback: try raw text decode
+                  dataStr = new TextDecoder().decode(buffer);
+                }
+
+                if (dataStr && dataStr.length > 10) {
+                  console.log("[MasterLovableHook] 📦 Binary decompressed:", dataStr.slice(0, 200));
+                }
+              } catch (decompressError) {
+                // Try TextDecoder as last resort
+                try {
+                  dataStr = new TextDecoder().decode(
+                    event.data instanceof Blob ? await event.data.arrayBuffer() : event.data
+                  );
+                } catch (e) {}
+              }
+            }
+
+            // =============================================
+            // Capture build error event ID (from string OR decompressed binary)
+            // =============================================
+            if (dataStr && dataStr.includes("#bld:") && dataStr.includes("hasError")) {
+              try {
+                // Handle JSON array (trajectory sends arrays of events)
+                let parsed;
+                const trimmed = dataStr.trim();
+                if (trimmed.startsWith("[")) {
+                  const arr = JSON.parse(trimmed);
+                  // Find the build error event in the array
+                  for (const item of arr) {
+                    if (item && item.type === "trajectory" && item.event && item.event.id) {
+                      parsed = item;
+                      break;
+                    }
+                  }
+                  if (!parsed) parsed = arr[0];
+                } else {
+                  parsed = JSON.parse(trimmed);
+                }
+
+                if (parsed && parsed.event && parsed.event.id && parsed.event.payload) {
+                  const eventIdValue = parsed.event.id.value || parsed.event.id || "";
+                  const buildPayload = parsed.event.payload.build;
+
+                  if (String(eventIdValue).includes("#bld:") && buildPayload) {
+                    const typecheck = buildPayload.buildErrors && buildPayload.buildErrors.typecheck;
+                    const runtime = buildPayload.buildErrors && buildPayload.buildErrors.runtime;
+
+                    let errorMessage = "";
+                    let hasError = false;
+
+                    if (typecheck && typecheck.hasError) {
+                      hasError = true;
+                      errorMessage = (typecheck.output || "").trim().split("\n")[0];
+                    } else if (runtime && runtime.hasError) {
+                      hasError = true;
+                      errorMessage = (runtime.output || "").trim().split("\n")[0];
+                    }
+
+                    if (hasError && errorMessage) {
+                      window.__qlBuildState = {
+                        eventId: eventIdValue,
+                        errorMessage: errorMessage
+                      };
+                      console.log("[MasterLovableHook] 📐 build_event_id capturado:", eventIdValue, "|", errorMessage.slice(0, 80));
+                    }
+                  }
+                }
+              } catch (parseError) {
+                console.warn("[MasterLovableHook] Binary parse error:", parseError.message);
+              }
+            }
+
+            // =============================================
+            // Also check for credit_total updates
+            // =============================================
+            if (dataStr && dataStr.includes("credit_total")) {
+              try {
+                const parsed = JSON.parse(dataStr.trim().startsWith("[") ? dataStr.trim() : dataStr);
+                const items = Array.isArray(parsed) ? parsed : [parsed];
+                for (const item of items) {
+                  if (item && item.ops) {
+                    for (const op of item.ops) {
+                      if (op.path && op.path.includes("credit_total")) {
+                        console.log("[MasterLovableHook] 💰 Credit update:", op.value, "(" + op.op + ")");
+                      }
+                    }
+                  }
+                }
+              } catch (e) {}
+            }
+
+          } catch (error) {}
         });
+
 
         return ws;
       }
+
+
 
       // Replace global WebSocket
       try {
