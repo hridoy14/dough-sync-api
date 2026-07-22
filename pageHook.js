@@ -216,7 +216,7 @@
           const url = typeof args[0] === "string" ? args[0] : args[0] && args[0].url || "";
           const isRequestInstance = args[0] instanceof Request;
           const method = (isRequestInstance ? args[0].method || "GET" : (args[1] || {}).method || "GET").toUpperCase();
-          //const isLovablePost = url && method === "POST" && (url.includes("api.lovable.dev") || url.includes("api.lovable.app") || url.includes("lovable-api.com") || url.includes("lovable.dev"));
+         // const isLovablePost = url && method === "POST" && (url.includes("api.lovable.dev") || url.includes("api.lovable.app") || url.includes("lovable-api.com") || url.includes("lovable.dev"));
           // শুধু chat/trajectory endpoint এ bypass apply হবে
 const isLovablePost = url && method === "POST" && 
   (url.includes("/chat") || url.includes("/trajectory") || url.includes("converse") || url.includes("messages")) &&
@@ -462,22 +462,16 @@ const isLovablePost = url && method === "POST" &&
 
                 // Standard message injection
                 if (parsed && typeof parsed.message === "string" && parsed.message.length > 0) {
-                    // Keep DUPLICATE message, just add bypass metadata
-                  /*
-                  parsed.intent = "LOVEABLE PUSH";
-                  parsed.message_intent_metadata = {
-                    fix_error_metadata: {
-                      errors: []
-                    }
-                  };
-                  data = JSON.stringify(parsed);
-                  */
-                 // Keep original message, just add bypass metadata
-                  parsed.intent = "build";
-                  parsed.model = null;
-                  parsed.contains_error = false;
-                  data = JSON.stringify(parsed);
-                  console.log("[MasterLovableHook] 💉 fix_error injetado (WS):", parsed.message.slice(0, 80));
+  // ★★★ NEW: type field যোগ করুন ★★★
+  if (!parsed.type) {
+    parsed.type = "user_message";
+  }
+  // Keep original message, just add bypass metadata
+  parsed.intent = "build";
+  parsed.model = null;
+  parsed.contains_error = false;
+  data = JSON.stringify(parsed);
+  console.log("[MasterLovableHook] 💉 fix_error injetado (WS):", parsed.message.slice(0, 80));
 
                   // Convex Mutation format
                 } else if (parsed && parsed.type === "Mutation" && parsed.args) {
