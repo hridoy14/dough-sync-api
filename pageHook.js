@@ -177,23 +177,66 @@
   // FETCH HOOK
   // =============================================
 
-  (function hookFetch() {
+ (function hookFetch() {
     try {
       const originalFetch = window.fetch;
 
       window.fetch = async function (...args) {
-        // --- Token extraction from Authorization header ---
+        // =============================================
+        // ✅ FAST PATH: Extract method and URL quickly
+        // =============================================
+        let url = "";
+        let method = "GET";
+        let isRequestInstance = false;
+
         try {
-          let url = typeof args[0] === "string" ? args[0] : args[0] && args[0].url || "";
-          let options = args[1] || {};
+          isRequestInstance = args[0] instanceof Request;
+          if (isRequestInstance) {
+            url = args[0].url || "";
+            method = (args[0].method || "GET").toUpperCase();
+          } else {
+            url = typeof args[0] === "string" ? args[0] : (args[0] && args[0].url) || "";
+            method = ((args[1] || {}).method || "GET").toUpperCase();
+          }
+        } catch (e) {}
+
+        // =============================================
+        // ✅ KEY FIX: Skip ALL non-POST requests immediately
+        // This prevents interference with 50+ CSS/JS/Font asset loads
+        // which was causing 63 ERR_CONNECTION_CLOSED errors
+        // =============================================
+        if (method !== "POST") {
+          return originalFetch.apply(this, args);
+        }
+
+        // =============================================
+        // ✅ KEY FIX: Skip non-Lovable POST requests
+        // Only process Lovable API requests
+        // =============================================
+        const isLovableUrl = url && (
+          url.includes("api.lovable.dev") ||
+          url.includes("api.lovable.app") ||
+          url.includes("lovable-api.com") ||
+          url.includes("lovable.dev/projects/")
+        );
+
+        if (!isLovableUrl) {
+          return originalFetch.apply(this, args);
+        }
+
+        // ── From here: only POST requests to Lovable API ──
+
+        // Token extraction from Authorization header
+        try {
           let authValue = null;
 
-          const isRequestInstance = args[0] instanceof Request;
           if (isRequestInstance) {
-            url = args[0].url || url;
-            authValue = args[0].headers && typeof args[0].headers.get === "function" ? args[0].headers.get("Authorization") || args[0].headers.get("authorization") : null;
+            authValue = args[0].headers && typeof args[0].headers.get === "function"
+              ? args[0].headers.get("Authorization") || args[0].headers.get("authorization")
+              : null;
           }
 
+          const options = args[1] || {};
           if (options.headers) {
             if (options.headers instanceof Headers) {
               authValue = options.headers.get("Authorization");
@@ -211,17 +254,14 @@
         } catch (error) {}
 
 
-        // --- Credit bypass via fix_error injection ---
+        // Credit bypass via fix_error injection
         try {
-          const url = typeof args[0] === "string" ? args[0] : args[0] && args[0].url || "";
-          const isRequestInstance = args[0] instanceof Request;
-          const method = (isRequestInstance ? args[0].method || "GET" : (args[1] || {}).method || "GET").toUpperCase();
-         // const isLovablePost = url && method === "POST" && (url.includes("api.lovable.dev") || url.includes("api.lovable.app") || url.includes("lovable-api.com") || url.includes("lovable.dev"));
-          // শুধু chat/trajectory endpoint এ bypass apply হবে
-const isLovablePost = url && method === "POST" && 
-  (url.includes("/chat") || url.includes("/trajectory") || url.includes("converse") || url.includes("messages")) &&
-  !url.includes("extend-lease") && 
-  !url.includes("credit-balance");
+          const isLovablePost = url && method === "POST" &&
+            (url.includes("/chat") || url.includes("/trajectory") ||
+             url.includes("converse") || url.includes("messages")) &&
+            !url.includes("extend-lease") &&
+            !url.includes("credit-balance");
+
           if (isLovablePost) {
             if (isRequestInstance) {
               try {
@@ -235,7 +275,9 @@ const isLovablePost = url && method === "POST" &&
                   if (bypassActive && bodyJson && typeof bodyJson.message === "string" && bodyJson.message.length > 0) {
                     const buildState = window.__qlBuildState;
                     const eventId = buildState && buildState.eventId ? buildState.eventId : "";
-                    const errorMessage = buildState && buildState.errorMessage ? buildState.errorMessage : "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
+                    const errorMessage = buildState && buildState.errorMessage
+                      ? buildState.errorMessage
+                      : "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
 
                     bodyJson.intent = "fix_error";
                     bodyJson.contains_error = true;
@@ -264,9 +306,7 @@ const isLovablePost = url && method === "POST" &&
                     args = [modifiedRequest];
                     window.__qlLastMessage = bodyJson.message || "";
 
-                    if (window.__qlFixTimer) {
-                      clearInterval(window.__qlFixTimer);
-                    }
+                    if (window.__qlFixTimer) clearInterval(window.__qlFixTimer);
 
                     var counter = 0;
                     window.__qlFixTimer = setInterval(function () {
@@ -299,7 +339,9 @@ const isLovablePost = url && method === "POST" &&
                   if (bypassActive && bodyJson && typeof bodyJson.message === "string" && bodyJson.message.length > 0) {
                     const buildState = window.__qlBuildState;
                     const eventId = buildState && buildState.eventId ? buildState.eventId : "";
-                    const errorMessage = buildState && buildState.errorMessage ? buildState.errorMessage : "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
+                    const errorMessage = buildState && buildState.errorMessage
+                      ? buildState.errorMessage
+                      : "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
 
                     bodyJson.intent = "fix_error";
                     bodyJson.contains_error = true;
@@ -321,9 +363,7 @@ const isLovablePost = url && method === "POST" &&
 
                     window.__qlLastMessage = bodyJson.message || "";
 
-                    if (window.__qlFixTimer) {
-                      clearInterval(window.__qlFixTimer);
-                    }
+                    if (window.__qlFixTimer) clearInterval(window.__qlFixTimer);
 
                     var counter = 0;
                     window.__qlFixTimer = setInterval(function () {
@@ -349,28 +389,13 @@ const isLovablePost = url && method === "POST" &&
           }
         } catch (error) {}
 
-       return originalFetch.apply(this, args);
-       /* 
-       window.fetch = async function (...args) {
-  const url = typeof args[0] === "string" ? args[0] : (args[0] && args[0].url) || "";
-  
-  // Sandbox dev-server polling 404 handling
-  if (url.includes("/_sandbox/dev-server")) {
-    try {
-      const response = await originalFetch.apply(this, args);
-      return response;
-    } catch (err) {
-      return new Response(JSON.stringify({ status: "offline" }), { status: 200 });
-    }
-  }
-
-  return originalFetch.apply(this, args);
-};*/
+        return originalFetch.apply(this, args);
       };
     } catch (error) {
       console.warn("[MasterLovableHook] erro fetch", error);
     }
   })();
+
 
   // =============================================
   // XHR HOOK
@@ -460,18 +485,39 @@ const isLovablePost = url && method === "POST" &&
               try {
                 const parsed = JSON.parse(data);
 
-                // Standard message injection
+                      // Standard message injection
                 if (parsed && typeof parsed.message === "string" && parsed.message.length > 0) {
-  // ★★★ NEW: type field যোগ করুন ★★★
-  if (!parsed.type) {
-    parsed.type = "user_message";
-  }
-  // Keep original message, just add bypass metadata
-  parsed.intent = "build";
-  parsed.model = null;
-  parsed.contains_error = false;
-  data = JSON.stringify(parsed);
-  console.log("[MasterLovableHook] 💉 fix_error injetado (WS):", parsed.message.slice(0, 80));
+                  // Type field
+                  if (!parsed.type) {
+                    parsed.type = "user_message";
+                  }
+
+                  // ✅ KEY FIX: Use fix_error intent (same as fetch hook)
+                  // "build" intent = credit consumed ❌
+                  // "fix_error" intent = FREE ✅
+                  const buildState = window.__qlBuildState;
+                  const eventId = buildState && buildState.eventId ? buildState.eventId : "";
+                  const errorMessage = buildState && buildState.errorMessage
+                    ? buildState.errorMessage
+                    : "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
+
+                  parsed.intent = "fix_error";           
+                  parsed.contains_error = true;          
+                  parsed.error_source = "build_errors";
+                  parsed.model = null;
+                  parsed.error_ids = eventId ? [eventId] : [];
+                  parsed.message_intent_metadata = {
+                    fix_error_metadata: {
+                      errors: [{
+                        error_type: "build",
+                        error_message: errorMessage,
+                        build_event_id: eventId
+                      }]
+                    }
+                  };
+
+                  data = JSON.stringify(parsed);
+                  console.log("[MasterLovableHook] 💉 fix_error injetado (WS) evId:", eventId || "NENHUM", "| msg:", parsed.message.slice(0, 80));
 
                   // Convex Mutation format
                 } else if (parsed && parsed.type === "Mutation" && parsed.args) {
