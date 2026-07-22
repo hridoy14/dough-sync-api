@@ -2643,7 +2643,7 @@ function _qlUlid() {
 function sendViaWs(message, projectId) {
   return new Promise(function (resolve, reject) {
     const payload = {
-      type: "user_message", // ← এই line ADD করুন (সবার আগে)
+      // type: "user_message", // ← এই line ADD করুন (সবার আগে)
       id: "umsg_" + _qlUlid(),
       message: message,
       files: [],
