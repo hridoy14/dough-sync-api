@@ -2643,6 +2643,7 @@ function _qlUlid() {
 function sendViaWs(message, projectId) {
   return new Promise(function (resolve, reject) {
     const payload = {
+      type: "user_message", // ← এই line ADD করুন (সবার আগে)
       id: "umsg_" + _qlUlid(),
       message: message,
       files: [],
@@ -3200,33 +3201,15 @@ try {
 }*/
 
 // DOM injection — reliable, message will go
-//await sendNativeToLovable(finalMessage);
+await sendNativeToLovable(finalMessage);
 // WebSocket bypass in background — no credit charge
-/*try {
-  const storageData = await new Promise(resolve =>
-    chrome.storage.local.get(["lovable_projectId"], resolve)
-  );
-  const projectId = storageData.lovable_projectId || null;
-  sendViaWs(finalMessage, projectId).catch(() => {});
-} catch (e) {}*/
- // === FIX: Try WebSocket first (no credit), fallback to DOM ===
-let sentOk = false;
 try {
   const storageData = await new Promise(resolve =>
     chrome.storage.local.get(["lovable_projectId"], resolve)
   );
   const projectId = storageData.lovable_projectId || null;
-  await sendViaWs(finalMessage, projectId);
-  sentOk = true;
-  console.log("[QL] Sent via WebSocket — no credit charged");
-} catch (wsError) {
-  console.warn("[QL] WS failed, falling back to DOM:", wsError.message);
-}
-
-// If WS failed, fallback to DOM injection (this will charge credits)
-if (!sentOk) {
-  await sendNativeToLovable(finalMessage);
-}
+  sendViaWs(finalMessage, projectId).catch(() => {});
+} catch (e) {}
 
       if (log) {
         log.className = "ql-log-success";
