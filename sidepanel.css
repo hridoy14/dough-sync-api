@@ -21,7 +21,7 @@
 
 
 /* ২. চ্যাট ফিড মাঝখানের সম্পূর্ণ খালি জায়গা দখল করবে */
-#sp-chat-feed, .sp-chat-feed {
+#sp-tab-content, .sp-chat-feed {
   flex: 1 !important;
   min-height: 0 !important; /* 👈 মাঝের জায়গা দখল করবে */
   overflow-y: auto !important;
