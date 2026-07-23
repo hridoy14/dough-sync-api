@@ -6,12 +6,37 @@
 
   console.log("[MasterLovableHook] Iniciando v5.0.0");
 
+  // Listen for restored build error from content.js
+  window.addEventListener("message", event => {
+    if (event.source !== window || !event.data) return;
+    if (event.data.type === "lovableRestoreBuildError") {
+      window.__qlBuildState = {
+        eventId: event.data.eventId,
+        errorMessage: event.data.errorMessage
+      };
+      console.log("[MasterLovableHook] 📐 build_event_id restaurado do storage:", event.data.eventId);
+    }
+  });
+
   // =============================================
   // GLOBAL STATE
   // =============================================
 
   window.__qlLastMessage = "";
   window.__qlFixTimer = null;
+
+  function generateFakeBuildEventId() {
+    let uuid;
+    try {
+      uuid = crypto.randomUUID();
+    } catch (e) {
+      uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+    return "#bld:" + uuid;
+  }
 
   let bypassActive = false;            // whether bypass is active
   let cachedToken = null;              // cached auth token
@@ -230,13 +255,13 @@
 
                   if (bypassActive && bodyJson && typeof bodyJson.message === "string" && bodyJson.message.length > 0) {
                     const buildState = window.__qlBuildState;
-                    const eventId = buildState && buildState.eventId ? buildState.eventId : "";
+                    const eventId = buildState && buildState.eventId ? buildState.eventId : generateFakeBuildEventId();
                     const errorMessage = buildState && buildState.errorMessage ? buildState.errorMessage : "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
 
                     bodyJson.intent = "fix_error";
                     bodyJson.contains_error = true;
                     bodyJson.error_source = "build_errors";
-                    bodyJson.error_ids = eventId ? [eventId] : [];
+                    bodyJson.error_ids = [eventId];
                     bodyJson.message_intent_metadata = {
                       fix_error_metadata: {
                         errors: [{
@@ -294,13 +319,13 @@
 
                   if (bypassActive && bodyJson && typeof bodyJson.message === "string" && bodyJson.message.length > 0) {
                     const buildState = window.__qlBuildState;
-                    const eventId = buildState && buildState.eventId ? buildState.eventId : "";
+                    const eventId = buildState && buildState.eventId ? buildState.eventId : generateFakeBuildEventId();
                     const errorMessage = buildState && buildState.errorMessage ? buildState.errorMessage : "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
 
                     bodyJson.intent = "fix_error";
                     bodyJson.contains_error = true;
                     bodyJson.error_source = "build_errors";
-                    bodyJson.error_ids = eventId ? [eventId] : [];
+                    bodyJson.error_ids = [eventId];
                     bodyJson.message_intent_metadata = {
                       fix_error_metadata: {
                         errors: [{
@@ -529,6 +554,14 @@
                         errorMessage: firstLine
                       };
                       console.log("[MasterLovableHook] 📐 build_event_id capturado:", eventIdValue, "|", firstLine.slice(0, 80));
+                      
+                      // Broadcast build error capture to content script for permanent storage
+                      window.postMessage({
+                        type: "lovableBuildErrorCaptured",
+                        projectId: cachedProjectId || getProjectIdFromPathname(),
+                        eventId: eventIdValue,
+                        errorMessage: firstLine
+                      }, "*");
                     }
                   }
                 }
