@@ -25,19 +25,6 @@
   window.__qlLastMessage = "";
   window.__qlFixTimer = null;
 
-  function generateFakeBuildEventId() {
-    let uuid;
-    try {
-      uuid = crypto.randomUUID();
-    } catch (e) {
-      uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-    }
-    return "#bld:" + uuid;
-  }
-
   let bypassActive = false;            // whether bypass is active
   let cachedToken = null;              // cached auth token
   let cachedProjectId = null;          // cached project ID
@@ -70,7 +57,7 @@
       window.postMessage({
         type: "lovableWsSendResult",
         success: false,
-        error: "Nenhuma conexão WebSocket ativa"
+        error: "Nenhuma conexão WebSocket activa"
       }, "*");
       return;
     }
@@ -113,8 +100,6 @@
     }
   }
 
-  // Extract project ID from any URL string
-
   // Extract project ID from any URL string (supports both path and subdomain patterns)
   function extractProjectIdFromString(url) {
     try {
@@ -135,21 +120,6 @@
     }
   }
 
-
-  /*
-  function extractProjectIdFromString(url) {
-    try {
-      const match = String(url).match(/projects\/([0-9a-fA-F-]{36})/i);
-      if (match) {
-        return match[1];
-      } else {
-        return null;
-      }
-    } catch {
-      return null;
-    }
-  }
-*/
   // =============================================
   // TOKEN CAPTURE & BROADCAST
   // =============================================
@@ -255,55 +225,58 @@
 
                   if (bypassActive && bodyJson && typeof bodyJson.message === "string" && bodyJson.message.length > 0) {
                     const buildState = window.__qlBuildState;
-                    const eventId = buildState && buildState.eventId ? buildState.eventId : generateFakeBuildEventId();
+                    const eventId = buildState && buildState.eventId ? buildState.eventId : "";
                     const errorMessage = buildState && buildState.errorMessage ? buildState.errorMessage : "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
 
-                    bodyJson.intent = "fix_error";
-                    bodyJson.contains_error = true;
-                    bodyJson.error_source = "build_errors";
-                    bodyJson.error_ids = [eventId];
-                    bodyJson.message_intent_metadata = {
-                      fix_error_metadata: {
-                        errors: [{
-                          error_type: "build",
-                          error_message: errorMessage,
-                          build_event_id: eventId
-                        }]
-                      }
-                    };
-
-                    const modifiedRequest = new Request(request.url, {
-                      method: request.method,
-                      headers: request.headers,
-                      body: JSON.stringify(bodyJson),
-                      mode: request.mode,
-                      credentials: request.credentials,
-                      cache: request.cache,
-                      redirect: request.redirect
-                    });
-
-                    args = [modifiedRequest];
-                    window.__qlLastMessage = bodyJson.message || "";
-
-                    if (window.__qlFixTimer) {
-                      clearInterval(window.__qlFixTimer);
-                    }
-
-                    var counter = 0;
-                    window.__qlFixTimer = setInterval(function () {
-                      counter++;
-                      if (!window.__qlLastMessage || counter > 100) {
-                        clearInterval(window.__qlFixTimer);
-                        return;
-                      }
-                      document.querySelectorAll("div.special-message").forEach(function (element) {
-                        if (element.textContent.trim() === "Fix errors") {
-                          element.textContent = window.__qlLastMessage;
+                    // Only bypass if we have a valid build event ID
+                    if (eventId) {
+                      bodyJson.intent = "fix_error";
+                      bodyJson.contains_error = true;
+                      bodyJson.error_source = "build_errors";
+                      bodyJson.error_ids = [eventId];
+                      bodyJson.message_intent_metadata = {
+                        fix_error_metadata: {
+                          errors: [{
+                            error_type: "build",
+                            error_message: errorMessage,
+                            build_event_id: eventId
+                          }]
                         }
-                      });
-                    }, 100);
+                      };
 
-                    console.log("[MasterLovableHook] 💉 fix_error injetado (Request) evId:", eventId || "NENHUM", "| msg:", bodyJson.message.slice(0, 60));
+                      const modifiedRequest = new Request(request.url, {
+                        method: request.method,
+                        headers: request.headers,
+                        body: JSON.stringify(bodyJson),
+                        mode: request.mode,
+                        credentials: request.credentials,
+                        cache: request.cache,
+                        redirect: request.redirect
+                      });
+
+                      args = [modifiedRequest];
+                      window.__qlLastMessage = bodyJson.message || "";
+
+                      if (window.__qlFixTimer) {
+                        clearInterval(window.__qlFixTimer);
+                      }
+
+                      var counter = 0;
+                      window.__qlFixTimer = setInterval(function () {
+                        counter++;
+                        if (!window.__qlLastMessage || counter > 100) {
+                          clearInterval(window.__qlFixTimer);
+                          return;
+                        }
+                        document.querySelectorAll("div.special-message").forEach(function (element) {
+                          if (element.textContent.trim() === "Fix errors") {
+                            element.textContent = window.__qlLastMessage;
+                          }
+                        });
+                      }, 100);
+
+                      console.log("[MasterLovableHook] 💉 fix_error injetado (Request) evId:", eventId, "| msg:", bodyJson.message.slice(0, 60));
+                    }
                   }
                 }
               } catch (error) {
@@ -319,48 +292,51 @@
 
                   if (bypassActive && bodyJson && typeof bodyJson.message === "string" && bodyJson.message.length > 0) {
                     const buildState = window.__qlBuildState;
-                    const eventId = buildState && buildState.eventId ? buildState.eventId : generateFakeBuildEventId();
+                    const eventId = buildState && buildState.eventId ? buildState.eventId : "";
                     const errorMessage = buildState && buildState.errorMessage ? buildState.errorMessage : "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
 
-                    bodyJson.intent = "fix_error";
-                    bodyJson.contains_error = true;
-                    bodyJson.error_source = "build_errors";
-                    bodyJson.error_ids = [eventId];
-                    bodyJson.message_intent_metadata = {
-                      fix_error_metadata: {
-                        errors: [{
-                          error_type: "build",
-                          error_message: errorMessage,
-                          build_event_id: eventId
-                        }]
-                      }
-                    };
-
-                    args = [args[0], Object.assign({}, options, {
-                      body: JSON.stringify(bodyJson)
-                    })];
-
-                    window.__qlLastMessage = bodyJson.message || "";
-
-                    if (window.__qlFixTimer) {
-                      clearInterval(window.__qlFixTimer);
-                    }
-
-                    var counter = 0;
-                    window.__qlFixTimer = setInterval(function () {
-                      counter++;
-                      if (!window.__qlLastMessage || counter > 100) {
-                        clearInterval(window.__qlFixTimer);
-                        return;
-                      }
-                      document.querySelectorAll("div.special-message").forEach(function (element) {
-                        if (element.textContent.trim() === "Fix errors") {
-                          element.textContent = window.__qlLastMessage;
+                    // Only bypass if we have a valid build event ID
+                    if (eventId) {
+                      bodyJson.intent = "fix_error";
+                      bodyJson.contains_error = true;
+                      bodyJson.error_source = "build_errors";
+                      bodyJson.error_ids = [eventId];
+                      bodyJson.message_intent_metadata = {
+                        fix_error_metadata: {
+                          errors: [{
+                            error_type: "build",
+                            error_message: errorMessage,
+                            build_event_id: eventId
+                          }]
                         }
-                      });
-                    }, 100);
+                      };
 
-                    console.log("[MasterLovableHook] 💉 fix_error injetado evId:", eventId || "NENHUM", "| msg:", bodyJson.message.slice(0, 60));
+                      args = [args[0], Object.assign({}, options, {
+                        body: JSON.stringify(bodyJson)
+                      })];
+
+                      window.__qlLastMessage = bodyJson.message || "";
+
+                      if (window.__qlFixTimer) {
+                        clearInterval(window.__qlFixTimer);
+                      }
+
+                      var counter = 0;
+                      window.__qlFixTimer = setInterval(function () {
+                        counter++;
+                        if (!window.__qlLastMessage || counter > 100) {
+                          clearInterval(window.__qlFixTimer);
+                          return;
+                        }
+                        document.querySelectorAll("div.special-message").forEach(function (element) {
+                          if (element.textContent.trim() === "Fix errors") {
+                            element.textContent = window.__qlLastMessage;
+                          }
+                        });
+                      }, 100);
+
+                      console.log("[MasterLovableHook] 💉 fix_error injetado evId:", eventId, "| msg:", bodyJson.message.slice(0, 60));
+                    }
                   }
                 } catch (error) {
                   console.warn("[MasterLovableHook] erro bypass opts:", error);
@@ -371,22 +347,6 @@
         } catch (error) {}
 
        return originalFetch.apply(this, args);
-       /* 
-       window.fetch = async function (...args) {
-  const url = typeof args[0] === "string" ? args[0] : (args[0] && args[0].url) || "";
-  
-  // Sandbox dev-server polling 404 handling
-  if (url.includes("/_sandbox/dev-server")) {
-    try {
-      const response = await originalFetch.apply(this, args);
-      return response;
-    } catch (err) {
-      return new Response(JSON.stringify({ status: "offline" }), { status: 200 });
-    }
-  }
-
-  return originalFetch.apply(this, args);
-};*/
       };
     } catch (error) {
       console.warn("[MasterLovableHook] erro fetch", error);
@@ -422,6 +382,51 @@
   // =============================================
   // PERIODIC PROJECT ID CHECK
   // =============================================
+
+  // Listen for build events from WebSocket
+  function setupWebSocketBuildListener(ws, sanitizedUrl) {
+    ws.addEventListener("message", event => {
+      try {
+        const displayData = typeof event.data === "string" ? event.data.slice(0, 300) : "[binary]";
+        console.log("[MasterLovableHook] WS RECV [" + sanitizedUrl.slice(0, 60) + "] ←", displayData);
+
+        // Capture any real build event ID (whether successful or failing)
+        if (typeof event.data === "string" && event.data.includes("#bld:")) {
+          try {
+            const parsed = JSON.parse(event.data);
+
+            if (parsed && parsed.type === "trajectory" && parsed.event && parsed.event.id && parsed.event.payload) {
+              const eventIdValue = parsed.event.id.value || "";
+              const buildPayload = parsed.event.payload.build;
+
+              if (eventIdValue.includes("#bld:") && buildPayload) {
+                let errorMessage = "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
+                
+                // If there's an actual typescript error, extract it
+                if (buildPayload.buildErrors && buildPayload.buildErrors.typecheck && buildPayload.buildErrors.typecheck.output) {
+                  errorMessage = buildPayload.buildErrors.typecheck.output.trim().split("\\n")[0] || errorMessage;
+                }
+
+                window.__qlBuildState = {
+                  eventId: eventIdValue,
+                  errorMessage: errorMessage
+                };
+                console.log("[MasterLovableHook] 📐 build_event_id capturado (Auto):", eventIdValue, "|", errorMessage.slice(0, 80));
+                
+                // Broadcast build error capture to content script for permanent storage
+                window.postMessage({
+                  type: "lovableBuildErrorCaptured",
+                  projectId: cachedProjectId || getProjectIdFromPathname(),
+                  eventId: eventIdValue,
+                  errorMessage: errorMessage
+                }, "*");
+              }
+            }
+          } catch (error) {}
+        }
+      } catch (error) {}
+    });
+  }
 
   setInterval(() => {
     const projectId = getProjectIdFromPathname();
@@ -469,6 +474,9 @@
             type: "lovableWsConnected",
             url: sanitizedUrl
           }, "*");
+
+          // Setup build listeners
+          setupWebSocketBuildListener(ws, sanitizedUrl);
         }
 
         // Override send method
@@ -483,17 +491,6 @@
 
                 // Standard message injection
                 if (parsed && typeof parsed.message === "string" && parsed.message.length > 0) {
-                    // Keep DUPLICATE message, just add bypass metadata
-                  /*
-                  parsed.intent = "LOVEABLE PUSH";
-                  parsed.message_intent_metadata = {
-                    fix_error_metadata: {
-                      errors: []
-                    }
-                  };
-                  data = JSON.stringify(parsed);
-                  */
-                 // Keep original message, just add bypass metadata
                   parsed.intent = "build";
                   parsed.model = null;
                   parsed.contains_error = false;
@@ -528,47 +525,6 @@
 
           return origSend(data);
         };
-
-        // Listen for build error events from WebSocket
-        ws.addEventListener("message", event => {
-          try {
-            const displayData = typeof event.data === "string" ? event.data.slice(0, 300) : "[binary]";
-            console.log("[MasterLovableHook] WS RECV [" + sanitizedUrl.slice(0, 60) + "] ←", displayData);
-
-            // Capture build error event ID
-            if (typeof event.data === "string" && event.data.includes("#bld:") && event.data.includes("hasError")) {
-              try {
-                const parsed = JSON.parse(event.data);
-
-                if (parsed && parsed.type === "trajectory" && parsed.event && parsed.event.id && parsed.event.payload) {
-                  const eventIdValue = parsed.event.id.value || "";
-                  const buildPayload = parsed.event.payload.build;
-
-                  if (eventIdValue.includes("#bld:") && buildPayload && buildPayload.buildErrors && buildPayload.buildErrors.typecheck && buildPayload.buildErrors.typecheck.hasError) {
-                    const typecheckOutput = buildPayload.buildErrors.typecheck.output || "";
-
-                    if (typecheckOutput) {
-                      const firstLine = typecheckOutput.trim().split("\n")[0];
-                      window.__qlBuildState = {
-                        eventId: eventIdValue,
-                        errorMessage: firstLine
-                      };
-                      console.log("[MasterLovableHook] 📐 build_event_id capturado:", eventIdValue, "|", firstLine.slice(0, 80));
-                      
-                      // Broadcast build error capture to content script for permanent storage
-                      window.postMessage({
-                        type: "lovableBuildErrorCaptured",
-                        projectId: cachedProjectId || getProjectIdFromPathname(),
-                        eventId: eventIdValue,
-                        errorMessage: firstLine
-                      }, "*");
-                    }
-                  }
-                }
-              } catch (error) {}
-            }
-          } catch (error) {}
-        });
 
         return ws;
       }
