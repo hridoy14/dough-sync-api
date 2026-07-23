@@ -13,14 +13,7 @@
   window.__qlLastMessage = "";
   window.__qlFixTimer = null;
 
-  let bypassActive = true;        
-  try {
-    if (localStorage.getItem("__ql_bypass_active") === "1") {
-      bypassActive = true;
-      console.log("[MasterLovableHook] ✅ Bypass auto-activated from localStorage");
-    }
-  } catch (e) {}
-      // whether bypass is active
+  let bypassActive = false;            // whether bypass is active
   let cachedToken = null;              // cached auth token
   let cachedProjectId = null;          // cached project ID
   let openWebSockets = [];             // list of active WebSocket connections
@@ -184,66 +177,23 @@
   // FETCH HOOK
   // =============================================
 
- (function hookFetch() {
+  (function hookFetch() {
     try {
       const originalFetch = window.fetch;
 
       window.fetch = async function (...args) {
-        // =============================================
-        // ✅ FAST PATH: Extract method and URL quickly
-        // =============================================
-        let url = "";
-        let method = "GET";
-        let isRequestInstance = false;
-
+        // --- Token extraction from Authorization header ---
         try {
-          isRequestInstance = args[0] instanceof Request;
-          if (isRequestInstance) {
-            url = args[0].url || "";
-            method = (args[0].method || "GET").toUpperCase();
-          } else {
-            url = typeof args[0] === "string" ? args[0] : (args[0] && args[0].url) || "";
-            method = ((args[1] || {}).method || "GET").toUpperCase();
-          }
-        } catch (e) {}
-
-        // =============================================
-        // ✅ KEY FIX: Skip ALL non-POST requests immediately
-        // This prevents interference with 50+ CSS/JS/Font asset loads
-        // which was causing 63 ERR_CONNECTION_CLOSED errors
-        // =============================================
-        if (method !== "POST") {
-          return originalFetch.apply(this, args);
-        }
-
-        // =============================================
-        // ✅ KEY FIX: Skip non-Lovable POST requests
-        // Only process Lovable API requests
-        // =============================================
-        const isLovableUrl = url && (
-          url.includes("api.lovable.dev") ||
-          url.includes("api.lovable.app") ||
-          url.includes("lovable-api.com") ||
-          url.includes("lovable.dev/projects/")
-        );
-
-        if (!isLovableUrl) {
-          return originalFetch.apply(this, args);
-        }
-
-        // ── From here: only POST requests to Lovable API ──
-
-        // Token extraction from Authorization header
-        try {
+          let url = typeof args[0] === "string" ? args[0] : args[0] && args[0].url || "";
+          let options = args[1] || {};
           let authValue = null;
 
+          const isRequestInstance = args[0] instanceof Request;
           if (isRequestInstance) {
-            authValue = args[0].headers && typeof args[0].headers.get === "function"
-              ? args[0].headers.get("Authorization") || args[0].headers.get("authorization")
-              : null;
+            url = args[0].url || url;
+            authValue = args[0].headers && typeof args[0].headers.get === "function" ? args[0].headers.get("Authorization") || args[0].headers.get("authorization") : null;
           }
 
-          const options = args[1] || {};
           if (options.headers) {
             if (options.headers instanceof Headers) {
               authValue = options.headers.get("Authorization");
@@ -261,13 +211,12 @@
         } catch (error) {}
 
 
-        // Credit bypass via fix_error injection
+        // --- Credit bypass via fix_error injection ---
         try {
-          const isLovablePost = url && method === "POST" &&
-            (url.includes("/chat") || url.includes("/trajectory") ||
-             url.includes("converse") || url.includes("messages")) &&
-            !url.includes("extend-lease") &&
-            !url.includes("credit-balance");
+          const url = typeof args[0] === "string" ? args[0] : args[0] && args[0].url || "";
+          const isRequestInstance = args[0] instanceof Request;
+          const method = (isRequestInstance ? args[0].method || "GET" : (args[1] || {}).method || "GET").toUpperCase();
+          const isLovablePost = url && method === "POST" && (url.includes("api.lovable.dev") || url.includes("api.lovable.app") || url.includes("lovable-api.com") || url.includes("lovable.dev"));
 
           if (isLovablePost) {
             if (isRequestInstance) {
@@ -282,9 +231,7 @@
                   if (bypassActive && bodyJson && typeof bodyJson.message === "string" && bodyJson.message.length > 0) {
                     const buildState = window.__qlBuildState;
                     const eventId = buildState && buildState.eventId ? buildState.eventId : "";
-                    const errorMessage = buildState && buildState.errorMessage
-                      ? buildState.errorMessage
-                      : "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
+                    const errorMessage = buildState && buildState.errorMessage ? buildState.errorMessage : "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
 
                     bodyJson.intent = "fix_error";
                     bodyJson.contains_error = true;
@@ -313,7 +260,9 @@
                     args = [modifiedRequest];
                     window.__qlLastMessage = bodyJson.message || "";
 
-                    if (window.__qlFixTimer) clearInterval(window.__qlFixTimer);
+                    if (window.__qlFixTimer) {
+                      clearInterval(window.__qlFixTimer);
+                    }
 
                     var counter = 0;
                     window.__qlFixTimer = setInterval(function () {
@@ -346,9 +295,7 @@
                   if (bypassActive && bodyJson && typeof bodyJson.message === "string" && bodyJson.message.length > 0) {
                     const buildState = window.__qlBuildState;
                     const eventId = buildState && buildState.eventId ? buildState.eventId : "";
-                    const errorMessage = buildState && buildState.errorMessage
-                      ? buildState.errorMessage
-                      : "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
+                    const errorMessage = buildState && buildState.errorMessage ? buildState.errorMessage : "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
 
                     bodyJson.intent = "fix_error";
                     bodyJson.contains_error = true;
@@ -370,7 +317,9 @@
 
                     window.__qlLastMessage = bodyJson.message || "";
 
-                    if (window.__qlFixTimer) clearInterval(window.__qlFixTimer);
+                    if (window.__qlFixTimer) {
+                      clearInterval(window.__qlFixTimer);
+                    }
 
                     var counter = 0;
                     window.__qlFixTimer = setInterval(function () {
@@ -396,13 +345,28 @@
           }
         } catch (error) {}
 
-        return originalFetch.apply(this, args);
+       return originalFetch.apply(this, args);
+       /* 
+       window.fetch = async function (...args) {
+  const url = typeof args[0] === "string" ? args[0] : (args[0] && args[0].url) || "";
+  
+  // Sandbox dev-server polling 404 handling
+  if (url.includes("/_sandbox/dev-server")) {
+    try {
+      const response = await originalFetch.apply(this, args);
+      return response;
+    } catch (err) {
+      return new Response(JSON.stringify({ status: "offline" }), { status: 200 });
+    }
+  }
+
+  return originalFetch.apply(this, args);
+};*/
       };
     } catch (error) {
       console.warn("[MasterLovableHook] erro fetch", error);
     }
   })();
-
 
   // =============================================
   // XHR HOOK
@@ -492,39 +456,24 @@
               try {
                 const parsed = JSON.parse(data);
 
-                      // Standard message injection
+                // Standard message injection
                 if (parsed && typeof parsed.message === "string" && parsed.message.length > 0) {
-                  // Type field
-                  if (!parsed.type) {
-                    parsed.type = "user_message";
-                  }
-
-                  // ✅ KEY FIX: Use fix_error intent (same as fetch hook)
-                  // "build" intent = credit consumed ❌
-                  // "fix_error" intent = FREE ✅
-                  const buildState = window.__qlBuildState;
-                  const eventId = buildState && buildState.eventId ? buildState.eventId : "";
-                  const errorMessage = buildState && buildState.errorMessage
-                    ? buildState.errorMessage
-                    : "src/App.tsx(1,7): error TS2322: Type 'number' is not assignable to type 'string'.";
-
-                  parsed.intent = "fix_error";           
-                  parsed.contains_error = true;          
-                  parsed.error_source = "build_errors";
-                  parsed.model = null;
-                  parsed.error_ids = eventId ? [eventId] : [];
+                    // Keep DUPLICATE message, just add bypass metadata
+                  /*
+                  parsed.intent = "LOVEABLE PUSH";
                   parsed.message_intent_metadata = {
                     fix_error_metadata: {
-                      errors: [{
-                        error_type: "build",
-                        error_message: errorMessage,
-                        build_event_id: eventId
-                      }]
+                      errors: []
                     }
                   };
-
                   data = JSON.stringify(parsed);
-                  console.log("[MasterLovableHook] 💉 fix_error injetado (WS) evId:", eventId || "NENHUM", "| msg:", parsed.message.slice(0, 80));
+                  */
+                 // Keep original message, just add bypass metadata
+                  parsed.intent = "build";
+                  parsed.model = null;
+                  parsed.contains_error = false;
+                  data = JSON.stringify(parsed);
+                  console.log("[MasterLovableHook] 💉 fix_error injetado (WS):", parsed.message.slice(0, 80));
 
                   // Convex Mutation format
                 } else if (parsed && parsed.type === "Mutation" && parsed.args) {
@@ -556,7 +505,6 @@
         };
 
         // Listen for build error events from WebSocket
-        /*
         ws.addEventListener("message", event => {
           try {
             const displayData = typeof event.data === "string" ? event.data.slice(0, 300) : "[binary]";
@@ -587,197 +535,10 @@
               } catch (error) {}
             }
           } catch (error) {}
-        });*/
-        
-        // Listen for build error events from WebSocket
-     
-        // Listen for build error events from WebSocket
-        ws.addEventListener("message", async (event) => {
-          try {
-            const isBinary = event.data instanceof ArrayBuffer || event.data instanceof Blob;
-            const byteSize = isBinary ? (event.data.byteLength || event.data.size || 0) : 0;
-            const displayData = typeof event.data === "string"
-              ? event.data.slice(0, 300)
-              : "[binary " + byteSize + " bytes]";
-            console.log("[MasterLovableHook] WS RECV [" + sanitizedUrl.slice(0, 60) + "] ←", displayData);
-
-            let dataStr = null;
-
-            if (typeof event.data === "string") {
-              // String message — use directly
-              dataStr = event.data;
-            } else if (isBinary && byteSize > 5) {
-              // Binary message — try multiple decode methods
-              let buffer;
-              try {
-                if (event.data instanceof Blob) {
-                  buffer = await event.data.arrayBuffer();
-                } else {
-                  buffer = event.data;
-                }
-              } catch (e) {
-                console.warn("[MasterLovableHook] ⚠️ Buffer read error:", e.message);
-                return;
-              }
-
-              // Method 1: Try plain TextDecoder first (maybe already decompressed by WS layer)
-              try {
-                const plainText = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
-                // Check if it looks like valid JSON
-                if (plainText && (plainText.trim().startsWith("{") || plainText.trim().startsWith("["))) {
-                  dataStr = plainText;
-                  console.log("[MasterLovableHook] 📦 Binary decoded as plain text:", dataStr.slice(0, 200));
-                }
-              } catch (e) {}
-
-              // Method 2: Try DecompressionStream "deflate-raw"
-              if (!dataStr && typeof DecompressionStream !== "undefined") {
-                try {
-                  const ds = new DecompressionStream("deflate-raw");
-                  const stream = new Blob([buffer]).stream().pipeThrough(ds);
-                  dataStr = await new Response(stream).text();
-                  if (dataStr && dataStr.length > 5) {
-                    console.log("[MasterLovableHook] 📦 Decompressed (deflate-raw):", dataStr.slice(0, 200));
-                  } else {
-                    dataStr = null;
-                  }
-                } catch (e) {
-                  console.log("[MasterLovableHook] ⚠️ deflate-raw failed:", e.message);
-                }
-              }
-
-              // Method 3: Try DecompressionStream "deflate" (with zlib header)
-              if (!dataStr && typeof DecompressionStream !== "undefined") {
-                try {
-                  const ds = new DecompressionStream("deflate");
-                  const stream = new Blob([buffer]).stream().pipeThrough(ds);
-                  dataStr = await new Response(stream).text();
-                  if (dataStr && dataStr.length > 5) {
-                    console.log("[MasterLovableHook] 📦 Decompressed (deflate):", dataStr.slice(0, 200));
-                  } else {
-                    dataStr = null;
-                  }
-                } catch (e) {
-                  console.log("[MasterLovableHook] ⚠️ deflate failed:", e.message);
-                }
-              }
-
-              // Method 4: Try DecompressionStream "gzip"
-              if (!dataStr && typeof DecompressionStream !== "undefined") {
-                try {
-                  const ds = new DecompressionStream("gzip");
-                  const stream = new Blob([buffer]).stream().pipeThrough(ds);
-                  dataStr = await new Response(stream).text();
-                  if (dataStr && dataStr.length > 5) {
-                    console.log("[MasterLovableHook] 📦 Decompressed (gzip):", dataStr.slice(0, 200));
-                  } else {
-                    dataStr = null;
-                  }
-                } catch (e) {
-                  console.log("[MasterLovableHook] ⚠️ gzip failed:", e.message);
-                }
-              }
-
-              // Method 5: Force TextDecoder (non-fatal, show raw bytes)
-              if (!dataStr) {
-                try {
-                  const raw = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
-                  console.log("[MasterLovableHook] ⚠️ All decompress failed. Raw bytes (first 100):", raw.slice(0, 100));
-                  console.log("[MasterLovableHook] ⚠️ First 10 bytes hex:", Array.from(new Uint8Array(buffer).slice(0, 10)).map(b => b.toString(16).padStart(2, "0")).join(" "));
-                  dataStr = raw;
-                } catch (e) {}
-              }
-            }
-
-            // =============================================
-            // Capture build error event ID
-            // =============================================
-            if (dataStr && dataStr.includes("#bld:")) {
-              console.log("[MasterLovableHook] 🔍 Found #bld: in data! Length:", dataStr.length);
-            }
-
-            if (dataStr && dataStr.includes("hasError")) {
-              console.log("[MasterLovableHook] 🔍 Found hasError in data!");
-            }
-
-            if (dataStr && (dataStr.includes("#bld:") || dataStr.includes("hasError") || dataStr.includes("buildErrors"))) {
-              try {
-                let parsed;
-                const trimmed = dataStr.trim();
-
-                if (trimmed.startsWith("[")) {
-                  const arr = JSON.parse(trimmed);
-                  for (const item of arr) {
-                    if (item && item.event && item.event.id) {
-                      parsed = item;
-                      break;
-                    }
-                  }
-                  if (!parsed && arr.length > 0) parsed = arr[0];
-                } else if (trimmed.startsWith("{")) {
-                  parsed = JSON.parse(trimmed);
-                }
-
-                if (parsed) {
-                  // Check nested structures
-                  const eventIdValue = parsed.event && parsed.event.id
-                    ? (parsed.event.id.value || parsed.event.id)
-                    : "";
-
-                  const payload = parsed.event && parsed.event.payload
-                    ? parsed.event.payload
-                    : parsed.payload || null;
-
-                  const buildPayload = payload && payload.build ? payload.build : null;
-
-                  if (buildPayload) {
-                    const typecheck = buildPayload.buildErrors && buildPayload.buildErrors.typecheck;
-                    const runtime = buildPayload.buildErrors && buildPayload.buildErrors.runtime;
-
-                    let errorMessage = "";
-                    let hasError = false;
-
-                    if (typecheck && typecheck.hasError) {
-                      hasError = true;
-                      errorMessage = (typecheck.output || "").trim().split("\n")[0];
-                    } else if (runtime && runtime.hasError) {
-                      hasError = true;
-                      errorMessage = (runtime.output || "").trim().split("\n")[0];
-                    }
-
-                    if (hasError) {
-                      window.__qlBuildState = {
-                        eventId: String(eventIdValue),
-                        errorMessage: errorMessage
-                      };
-                      console.log("[MasterLovableHook] 📐 build_event_id capturado:", eventIdValue, "|", errorMessage.slice(0, 80));
-                    }
-                  }
-
-                  // Also check for credit_total in realtime patches
-                  if (parsed.ops || (parsed.payload && parsed.payload.ops)) {
-                    const ops = parsed.ops || (parsed.payload && parsed.payload.ops) || [];
-                    for (const op of ops) {
-                      if (op.path && op.path.includes("credit_total")) {
-                        console.log("[MasterLovableHook] 💰 Credit update:", op.value, "(" + op.op + ")");
-                      }
-                    }
-                  }
-                }
-              } catch (parseError) {
-                console.warn("[MasterLovableHook] ⚠️ JSON parse error:", parseError.message, "| data:", dataStr.slice(0, 100));
-              }
-            }
-
-          } catch (error) {
-            console.warn("[MasterLovableHook] ⚠️ WS message handler error:", error.message);
-          }
         });
 
         return ws;
       }
-
-
 
       // Replace global WebSocket
       try {
