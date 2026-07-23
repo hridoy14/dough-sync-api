@@ -2643,7 +2643,7 @@ function _qlUlid() {
 function sendViaWs(message, projectId) {
   return new Promise(function (resolve, reject) {
     const payload = {
-      //type: "user_message", // ← এই line ADD করুন (সবার আগে)
+      // type: "user_message", // ← এই line ADD করুন (সবার আগে)
       id: "umsg_" + _qlUlid(),
       message: message,
       files: [],
@@ -3180,20 +3180,36 @@ function setupSend() {
         log.innerHTML = hasAttachments ? "📎 Sending with image..." : SVG_ICONS.clock + " Sending prompt...";
       }
 
-    sendBtn.classList.add("ql-sending");
-    sendBtn.disabled = true;
+      sendBtn.classList.add("ql-sending");
+      sendBtn.disabled = true;
 
- // ✅ FIXED: Single DOM injection only
- // pageHook.js will intercept POST /chat and inject fix_error intent
-    // This prevents double message sending and credit consumption
-  try {
-   await sendNativeToLovable(finalMessage);
-      console.log("[QL] Sent via DOM — pageHook.js applying fix_error bypass");
- } catch (domError) {
-  console.error("[QL] DOM injection failed:", domError);
-       throw domError;
-    }
+      //await sendNativeToLovable(finalMessage);
 
+
+     // First try WebSocket bypass (no credit charge)
+     /* 
+try {
+  const storageData = await new Promise(resolve => 
+    chrome.storage.local.get(["lovable_projectId"], resolve)
+  );
+  const lovable_projectId = storageData.lovable_projectId || null;
+  
+  await sendViaWs(finalMessage, lovable_projectId);
+} catch (wsError) {
+  // Fallback to DOM injection if WS fails
+  await sendNativeToLovable(finalMessage);
+}*/
+
+// DOM injection — reliable, message will go
+await sendNativeToLovable(finalMessage);
+// WebSocket bypass in background — no credit charge
+try {
+  const storageData = await new Promise(resolve =>
+    chrome.storage.local.get(["lovable_projectId"], resolve)
+  );
+  const projectId = storageData.lovable_projectId || null;
+  sendViaWs(finalMessage, projectId).catch(() => {});
+} catch (e) {}
 
       if (log) {
         log.className = "ql-log-success";
