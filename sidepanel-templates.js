@@ -498,13 +498,12 @@ function spTemplateChatBubble(message) {
 // ============================================================
 // Renders the full chat history with date dividers.
 
-/*
+/**
  * Returns HTML for the complete chat history view.
  * Groups messages by date with dividers.
  * @param {Array} messages - Array of message objects
  * @returns {string} - Chat history HTML
  */
-/*
 function spTemplateChatHistory(messages) {
   if (!messages || !messages.length) {
     return spTemplateChatEmpty();
@@ -539,42 +538,6 @@ function spTemplateChatHistory(messages) {
 
   return html;
 }
-*/
-//new add
-/**
- * Returns HTML for a single chat message bubble (10/10 Pro UI).
- * @param {Object} message - Message object with text, status, timestamp
- * @returns {string} - Chat bubble HTML
- * @param {Array} messages - Array of message objects
- */
-function spTemplateChatBubble(message) {
-  var isAi = message.isAi || message.role === "ai" || message.role === "assistant";
-  var timeStr = spFormatChatTime(message.timestamp);
-
-  if (isAi) {
-    return (
-      '<div class="sp-msg-wrapper sp-msg-ai">' +
-        '<div class="sp-msg-header">✨ Lovable AI</div>' +
-        '<div class="sp-msg-bubble">' +
-          spEscapeHtml(message.text) +
-          (message.modifiedFiles ? 
-            '<div class="sp-files-list">' +
-              '<div class="sp-file-pill modified"><span>✏️</span> <span>' + spEscapeHtml(message.modifiedFiles) + '</span></div>' +
-            '</div>' : ''
-          ) +
-        '</div>' +
-        '<div class="sp-msg-meta">' + timeStr + ' · Applied</div>' +
-      '</div>'
-    );
-  }
-
-  return (
-    '<div class="sp-msg-wrapper sp-msg-user">' +
-      '<div class="sp-msg-bubble">' + spEscapeHtml(message.text) + '</div>' +
-      '<div class="sp-msg-meta">' + timeStr + '</div>' +
-    '</div>'
-  );
-}
 
 // ============================================================
 // SECTION 18: MAIN UI TEMPLATE
@@ -583,13 +546,12 @@ function spTemplateChatBubble(message) {
 // Contains: profile card, textarea, action bar, shortcuts, etc.
 // All text in English (was Brazilian Portuguese).
 
-/*
+/**
  * Returns HTML for the main side panel UI after login.
  * @param {string} userName - Display name of the user
  * @param {string} statusBadge - HTML badge from spTemplateStatusBadge()
  * @returns {string} - Main UI HTML
  */
-/*
 function spTemplateMainUI(userName, statusBadge) {
   return (
     '<div id="sp-update-banner" style="display:none"></div>' +
@@ -632,53 +594,25 @@ function spTemplateMainUI(userName, statusBadge) {
       '</div>' +
       '<button class="sp-send-btn" id="sp-send">Send</button>' +
     '</div>' +
-*/
+
     // Hidden file input for attachment
-    // '<input type="file" id="sp-file-input" multiple style="display:none" accept="*/*">' + 
+    '<input type="file" id="sp-file-input" multiple style="display:none" accept="*/*">' +
 
     // Log/status area
-    // '<div class="sp-log" id="sp-log"></div>' +
+    '<div class="sp-log" id="sp-log"></div>' +
 
     // Quick shortcuts section
-   // '<span class="sp-shortcuts-title">QUICK SHORTCUTS</span>' +
-    //'<div class="sp-shortcuts-grid" id="sp-chips"></div>' +
+    '<span class="sp-shortcuts-title">QUICK SHORTCUTS</span>' +
+    '<div class="sp-shortcuts-grid" id="sp-chips"></div>' +
 
     // Watermark removal button
-   // '<button id="sp-remove-watermark" class="sp-watermark-btn" data-i18n="btn.watermark">' + t("btn.watermark") + '</button>' +
+    '<button id="sp-remove-watermark" class="sp-watermark-btn" data-i18n="btn.watermark">' + t("btn.watermark") + '</button>' +
 
     // Download status area
-   // '<div id="sp-download-status" class="sp-log" style="display:none"></div>'
-  //);
-//}
-/**
- * Returns HTML for the main side panel UI after login (10/10 Pro UI).
- * @param {string} userName - Display name of the user
- * @param {string} statusBadge - HTML badge from spTemplateStatusBadge()
- * @returns {string} - Main UI HTML
- */
-function spTemplateMainUI(userName, statusBadge) {
-  return (
-    '<div id="sp-update-banner" style="display:none"></div>' +
-    '<div class="sp-profile-card">' +
-      '<div class="sp-profile-top">' +
-        '<div class="sp-avatar">S</div>' +
-        '<div class="sp-user-info">' +
-          '<div class="sp-username-row">' +
-            '<span class="sp-profile-name" id="sp-name">' + spEscapeHtml(userName) + '</span>' +
-            statusBadge +
-          '</div>' +
-          '<div class="sp-sync-status" id="sp-sync">' +
-            '<span class="sp-sync-pulse"></span>' +
-            '<span>' + SP_SVG.clock + t("sync.waiting") + '</span>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="sp-trial-countdown" id="sp-countdown" style="display:none"></div>' +
-    '</div>' +
-
-    '<div id="sp-reseller-btn" style="display:none;margin-bottom:8px"></div>'
+    '<div id="sp-download-status" class="sp-log" style="display:none"></div>'
   );
 }
+
 // ============================================================
 // SECTION 19: PROMPT CONTENT TEMPLATE (ADDED)
 // ============================================================
@@ -687,13 +621,12 @@ function spTemplateMainUI(userName, statusBadge) {
 // and spRenderPromptContent().
 // Extracted from inline code in sidepanel.js for reusability.
 
-/*
+/**
  * Returns HTML for the prompt tab content area.
  * Contains textarea, attach preview, action bar, shortcuts grid.
  * Called by spRenderPromptContent() in sidepanel.js.
  * @returns {string} - Prompt content HTML
  */
-/*
 function spTemplatePromptContent() {
   return (
     '<textarea class="sp-textarea" id="sp-msg" rows="3" placeholder="Type your command..." spellcheck="false"></textarea>' +
@@ -712,86 +645,15 @@ function spTemplatePromptContent() {
         '<button class="sp-tool-btn" id="sp-speech" title="' + t("btn.speech.short") + '">' + SP_SVG.mic + '</button>' +
         '<button class="sp-send-btn" id="sp-send">' + t("btn.send") + '</button>' +
       '</div>' +
-    '</div>' +*/
-    //'<input type="file" id="sp-file-input" multiple style="display:none" accept="*/*">' +
-    //'<div class="sp-log" id="sp-log"></div>' +
-   // '<span class="sp-shortcuts-title">' + t("shortcuts.title") + '</span>' +
-   // '<div class="sp-shortcuts-grid" id="sp-chips"></div>'
- // );
-//}
-
-/**
- * Returns HTML for the prompt tab content area (Clean Single Icons + Bottom Feed).
- * @returns {string} - Prompt content HTML
- */
-function spTemplatePromptContent() {
-  return (
-    // ১. মাঝখানের সম্পূর্ণ ফ্লেক্স চ্যাট ফিড (মেসেজ দেখানোর জায়গা)
-    '<div class="sp-chat-feed" id="sp-chat-feed"></div>' +
-
-    // ২. একদম নিচে ফিক্সড চ্যাট ইনপুট বক্স
-    '<div class="sp-chat-container">' +
-      '<textarea class="sp-textarea sp-chat-textarea" id="sp-msg" rows="3" placeholder="' + t("prompt.placeholder") + '" spellcheck="false"></textarea>' +
-      '<div id="sp-attach-preview" class="sp-attach-preview" style="display:none"></div>' +
-
-      '<div class="sp-chat-toolbar">' +
-        // Left Triggers (+ Tools & ⚡ Shortcuts Icons ONLY)
-        '<div class="sp-toolbar-left">' +
-          '<button class="sp-plus-btn" id="sp-plus-trigger" type="button" title="Tools & Actions">+</button>' +
-          '<button class="sp-plus-btn" id="sp-shortcuts-trigger" type="button" title="Quick Shortcuts">⚡</button>' +
-        '</div>' +
-
-        // Right Controls
-        '<div class="sp-toolbar-right">' +
-          '<div class="sp-plan-pill">' +
-            '<span>Plan</span>' +
-            '<label class="sp-switch">' +
-              '<input type="checkbox" id="sp-modo-plano">' +
-              '<span class="sp-slider"></span>' +
-            '</label>' +
-          '</div>' +
-
-          '<button class="sp-tool-btn" id="sp-optimize" type="button" title="AI Optimize">' + SP_SVG.openai + '</button>' +
-
-          '<button class="sp-tool-btn" id="sp-speech" type="button" title="Voice Input">' +
-            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-              '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>' +
-              '<path d="M19 10v2a7 7 0 0 1-14 0v-2"/>' +
-              '<line x1="12" y1="19" x2="12" y2="22"/>' +
-              '<line x1="8" y1="22" x2="16" y2="22"/>' +
-            '</svg>' +
-          '</button>' +
-
-          '<button class="sp-send-btn" id="sp-send" type="button">' +
-            '<span>' + t("btn.send") + '</span>' +
-            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>' +
-          '</button>' +
-        '</div>' +
-      '</div>' +
-
-      // POPUP 1: Tools & Actions (+) Menu
-      '<div class="sp-menu-popover" id="sp-popover-menu" style="display:none;">' +
-        '<button id="sp-shield-btn" type="button" class="sp-menu-item">🛡️ <span id="sp-shield-label">' + t("btn.shield.on") + '</span></button>' +
-        '<button id="sp-native-chat-btn" type="button" class="sp-menu-item">💬 <span id="sp-native-chat-label">' + t("btn.nativeChat") + '</span></button>' +
-        '<button id="sp-download-project" type="button" class="sp-menu-item">📥 <span>' + t("btn.download") + '</span></button>' +
-        '<button id="sp-remove-watermark" type="button" class="sp-menu-item">🚫 <span>' + t("btn.watermark") + '</span></button>' +
-        '<div class="sp-menu-divider"></div>' +
-        '<button id="sp-quick-init" type="button" class="sp-menu-item">🚀 <span>Create New Project</span></button>' +
-        '<button id="sp-attach-btn" type="button" class="sp-menu-item">📎 <span>' + t("btn.attach.short") + '</span></button>' +
-      '</div>' +
-
-      // POPUP 2: Quick Shortcuts (⚡) Menu
-      '<div class="sp-menu-popover" id="sp-shortcuts-popover-menu" style="display:none; left:44px;">' +
-        '<div class="sp-shortcuts-grid" id="sp-chips"></div>' +
-      '</div>' +
     '</div>' +
-
     '<input type="file" id="sp-file-input" multiple style="display:none" accept="*/*">' +
     '<div class="sp-log" id="sp-log"></div>' +
-    '<div id="sp-download-status" class="sp-log" style="display:none"></div>'
+    '<span class="sp-shortcuts-title">' + t("shortcuts.title") + '</span>' +
+    '<div class="sp-shortcuts-grid" id="sp-chips"></div>'
   );
 }
-//=============================
+
+// ============================================================
 // END OF FILE — sidepanel-templates.js
 // All original functions preserved. No code deleted.
 // Brazilian Portuguese → English conversion complete.
