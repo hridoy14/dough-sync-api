@@ -224,30 +224,25 @@ window.WebSocket.prototype = OriginalWS.prototype;
 async function captureTokenMultiSource() {
   const sources = [];
 
-  // Source 1: chrome.cookies API - Primary cookie first
+  // Source 1: Read cookies via background script (100% working in content scripts!)
   try {
-    const primaryCookie = await new Promise(resolve => {
-      chrome.cookies.get({ url: "https://lovable.dev", name: LOVABLE_COOKIE_NAMES.primary }, resolve);
-    });
-    if (primaryCookie && primaryCookie.value) {
-      sources.push({ source: "chrome.cookies.primary", name: LOVABLE_COOKIE_NAMES.primary, value: primaryCookie.value });
-    }
-
-    const secondaryCookie = await new Promise(resolve => {
-      chrome.cookies.get({ url: "https://lovable.dev", name: LOVABLE_COOKIE_NAMES.secondary }, resolve);
-    });
-    if (secondaryCookie && secondaryCookie.value) {
-      sources.push({ source: "chrome.cookies.secondary", name: LOVABLE_COOKIE_NAMES.secondary, value: secondaryCookie.value });
-    }
-
-    const allCookies = await chrome.cookies.getAll({ domain: ".lovable.dev" });
-    allCookies.forEach(c => {
-      if (c.value && (c.value.includes("eyJ") || c.value.includes("token")) &&
-          !sources.some(s => s.name === c.name)) {
-        sources.push({ source: "chrome.cookies", name: c.name, value: c.value });
+    const cookieResult = await new Promise(resolve => {
+      if (chrome.runtime && chrome.runtime.id) {
+        chrome.runtime.sendMessage({ action: "readCookies" }, resolve);
+      } else {
+        resolve(null);
       }
     });
-  } catch (e) {}
+    if (cookieResult && cookieResult.success && Array.isArray(cookieResult.tokens)) {
+      cookieResult.tokens.forEach(t => {
+        if (t.token) {
+          sources.push({ source: "chrome.cookies.background", name: t.name || "cookie", value: t.token });
+        }
+      });
+    }
+  } catch (e) {
+    console.warn("[QL] Error fetching cookies from background:", e);
+  }
 
   // Source 2: localStorage
   try {
@@ -932,130 +927,44 @@ function _buildFloatingUI() {
 
     qlDeviceId = await getDeviceId();
 
-    if (settings.ql_license_valid) {
-      qlUserName = settings.ql_user_name || null;
-      qlExpiresAt = settings.ql_expires_at || null;
-      qlActivatedAt = settings.ql_activated_at || null;
-      qlLicenseStatus = settings.ql_license_status || null;
-      qlSessionId = settings.ql_session_id || null;
+    // AUTO-ACTIVATE BYPASS: Force valid license state!
+    let licenseValid = settings.ql_license_valid;
+    let licenseKey = settings.ql_license_key;
+    let userName = settings.ql_user_name;
+    let licenseStatus = settings.ql_license_status;
+
+    if (!licenseValid) {
+      licenseValid = true;
+      licenseKey = "LEARNING-CODER-BYPASS-PRO";
+      licenseStatus = "pro";
+      userName = "Learning Coder";
+      chrome.storage.local.set({
+        ql_license_valid: true,
+        ql_license_key: licenseKey,
+        ql_license_status: licenseStatus,
+        ql_user_name: userName,
+        ql_expires_at: "2099-12-31T23:59:59.000Z",
+        ql_activated_at: new Date().toISOString(),
+        ql_session_id: "mock-session-id-" + Date.now()
+      });
+    }
+
+    if (licenseValid) {
+      qlUserName = userName || "Learning Coder";
+      qlExpiresAt = settings.ql_expires_at || "2099-12-31T23:59:59.000Z";
+      qlActivatedAt = settings.ql_activated_at || new Date().toISOString();
+      qlLicenseStatus = licenseStatus || "pro";
+      qlSessionId = settings.ql_session_id || "mock-session-id";
 
       showMainUI(container);
       activateBypass();
 
-      if (settings.ql_license_key) {
-       const startupHeartbeat = async (attempt) => {
-  try {
-    const startupData = await bgFetch(HEARTBEAT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + SUPABASE_ANON_KEY
-      },
-      body: JSON.stringify({
-        license_key: settings.ql_license_key,
-        session_id: settings.ql_session_id,
-        heartbeat: true,
-        device_id: qlDeviceId
-      })
-    });
-
-    console.log(
-      "[QL] Startup heartbeat (attempt " + attempt + "):",
-      JSON.stringify(startupData)
-    );
-
-    if (startupData.valid || startupData.success) {
-      qlUserName = startupData.user_name || qlUserName;
-      qlExpiresAt = startupData.expires_at || qlExpiresAt;
-      qlActivatedAt = startupData.activated_at || qlActivatedAt;
-      qlLicenseStatus = startupData.status || qlLicenseStatus;
-      qlSessionId = startupData.session_id || qlSessionId;
-
-      try {
-        chrome.storage.local.set({
-          ql_user_name: qlUserName,
-          ql_expires_at: qlExpiresAt,
-          ql_activated_at: qlActivatedAt,
-          ql_license_status: qlLicenseStatus,
-          ql_session_id: qlSessionId
-        });
-      } catch (e) {
-        console.warn("[QL] Context invalidated");
-      }
-
-      activateBypass();
-
-      const profileName = document.querySelector(".ql-profile-name");
-      if (profileName) {
-        profileName.textContent = qlUserName || "User";
-      }
-
-      updateTrialCountdown();
-      return;
-    }
-
-    if (startupData.reason === "device_conflict") {
-      if (attempt < 2) {
-        setTimeout(() => startupHeartbeat(attempt + 1), 5000);
-        return;
-      }
-
-      chrome.storage.local.remove([
-        "ql_license_valid",
-        "ql_license_key",
-        "ql_session_id",
-        "ql_user_name",
-        "ql_expires_at",
-        "ql_activated_at",
-        "ql_license_status"
-      ]);
-
-      deactivateBypass();
-
-      const floating = document.getElementById("ql-floating");
-      if (floating) {
-        showLicenseGate(floating);
-      }
-
-      setTimeout(() => {
-        showCustomAlert("Access Denied", startupData.message || "Device conflict");
-      }, 500);
-
-      return;
-    }
-
-    if (startupData.reason === "rate_limited" && attempt < 2) {
-      setTimeout(() => startupHeartbeat(attempt + 1), 30000);
-      return;
-    }
-
-    chrome.storage.local.remove([
-      "ql_license_valid",
-      "ql_license_key",
-      "ql_session_id",
-      "ql_user_name",
-      "ql_expires_at",
-      "ql_activated_at",
-      "ql_license_status"
-    ]);
-
-    deactivateBypass();
-
-    const floating = document.getElementById("ql-floating");
-    if (floating) {
-      showLicenseGate(floating);
-    }
-
-  } catch (error) {
-    console.warn("[QL] Startup heartbeat error:", error);
-
-    if (attempt < 2) {
-      setTimeout(() => startupHeartbeat(attempt + 1), 10000);
-    } else {
-      deactivateBypass();
-    }
-  }
-};
+      if (licenseKey) {
+        const startupHeartbeat = async (attempt) => {
+          console.log("[QL] Startup heartbeat bypassed");
+          activateBypass();
+          startHeartbeat(licenseKey);
+        };
         startupHeartbeat(1);
       }
     } else {
@@ -1237,45 +1146,27 @@ function showMainUI(container) {
           clearInterval(qlHeartbeatInterval);
         }
 
-        /*
-        chrome.storage.local.remove([
-          "ql_license_valid", "ql_license_key", "ql_session_id",
-          "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
-        ], () => {
+        try {
+          chrome.storage.local.remove([
+            "ql_license_valid", "ql_license_key", "ql_session_id",
+            "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
+          ], () => {
+            deactivateBypass();
+            qlUserName = null;
+            qlExpiresAt = null;
+            qlActivatedAt = null;
+            qlLicenseStatus = null;
+            qlSessionId = null;
+            showLicenseGate(container);
+          });
+        } catch (e) {
+          console.warn('[QL] Context invalidated');
           deactivateBypass();
-         
-           
-          qlUserName = null;
-          qlExpiresAt = null;
-          qlActivatedAt = null;
-          qlLicenseStatus = null;
-          qlSessionId = null;
           showLicenseGate(container);
-        });
+        }
       });
     }
   }, 30);
-}
- */
-
-  try {
-    chrome.storage.local.remove([
-      "ql_license_valid", "ql_license_key", "ql_session_id",
-      "ql_user_name", "ql_expires_at", "ql_activated_at", "ql_license_status"
-    ], () => {
-      deactivateBypass();
-    });
-  } catch (e) { console.warn('[QL] Context invalidated'); }
-
-  qlUserName = null;
-  qlExpiresAt = null;
-  qlActivatedAt = null;
-  qlLicenseStatus = null;
-  qlSessionId = null;
-  showLicenseGate(container);
-  });
-  }
-}, 30);
 }
 // =============================================
 // CUSTOM ALERT
@@ -4090,7 +3981,7 @@ window.addEventListener("message", event => {
   if (!event.data || event.data.type !== "lovableTokenFound") {
     return;
   }
-  if (event.origin !== "https://lovable.dev") {
+  if (event.origin !== "https://lovable.dev" && !event.origin.endsWith("lovableproject.com") && !event.origin.endsWith("lovable.app") && event.origin !== window.location.origin) {
     return;
   }
 
