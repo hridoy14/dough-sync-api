@@ -470,8 +470,7 @@
         console.log("[MasterLovableHook] WS conectando →", sanitizedUrl);
 
         // Track Lovable-related WebSockets
-        const isLovableWs = urlString.includes("lovable") || urlString.includes("trajectory") || urlString.includes("supabase") || urlString.includes("convex");
-
+        const isLovableWs = urlString.includes("lovable") || urlString.includes("trajectory") || urlString.includes("supabase") || urlString.includes("convex") || urlString.includes("firebase");
         if (isLovableWs) {
           openWebSockets = openWebSockets.filter(entry => entry.ws.readyState !== WebSocket.CLOSED);
           openWebSockets.push({
