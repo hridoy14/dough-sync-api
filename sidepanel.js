@@ -618,9 +618,8 @@
       }
 
       // Sync status
-      spUpdateSyncStatus();
-      chrome.storage.onChanged.addListener(changes => {
-        if (changes.lovable_projectId || changes.lovable_token) {
+          chrome.storage.onChanged.addListener(changes => {
+        if (changes.lovable_projectId || changes.lovable_token || changes.ql_project_errors) {
           spUpdateSyncStatus();
         }
       });
@@ -838,20 +837,29 @@
   // SYNC STATUS
   // =============================================
   function spUpdateSyncStatus() {
-    chrome.storage.local.get(["lovable_projectId", "lovable_token"], stored => {
+    chrome.storage.local.get(["lovable_projectId", "lovable_token", "ql_project_errors"], stored => {
       const syncEl = document.getElementById("sp-sync");
       if (!syncEl) return;
 
       if (stored.lovable_projectId && stored.lovable_token) {
         syncEl.className = "sp-sync-status sp-sync-ok";
-        syncEl.textContent = t("sync.ok") + " " + t("sync.project") + " " + stored.lovable_projectId.substring(0, 6) + "...";
+        const shortId = stored.lovable_projectId.substring(0, 6);
+        
+        const errors = stored.ql_project_errors || {};
+        const hasBypass = !!errors[stored.lovable_projectId];
+        
+        // সচল রিয়াল আইডি পেলেই কেবল Bypass Active দেখাবে
+        if (hasBypass) {
+          syncEl.innerHTML = t("sync.ok") + " " + t("sync.project") + " " + shortId + "... <span style=\"color:#10b981;font-weight:bold\">(Bypass Active 🚀)</span>";
+        } else {
+          syncEl.innerHTML = t("sync.ok") + " " + t("sync.project") + " " + shortId + "... <span style=\"color:#f59e0b;font-weight:bold\">(Bypass Inactive ⚠️)</span>";
+        }
       } else {
         syncEl.className = "sp-sync-status sp-sync-waiting";
         syncEl.innerHTML = SP_SVG.clock + t("sync.waiting");
       }
     });
   }
-
   // =============================================
   // TRIAL COUNTDOWN
   // =============================================
