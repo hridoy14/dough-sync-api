@@ -145,7 +145,12 @@ const wsUrlPatterns = [
   /^wss?:\/\/api\.lovable\.dev/i,
   /^wss?:\/\/[^.]+\.lovable\.dev/i,
   /^wss?:\/\/lovable-api\.com/i,
-  /^wss?:\/\/[^.]+\.lovable\.app/i
+  /^wss?:\/\/[^.]+\.lovable\.app/i,
+  /^wss?:\/\/[^.]+\.lovableproject\.co/i,       // .co ডোমেনের স্যান্ডবক্স ট্র্যাক করবে
+  /^wss?:\/\/[^.]+\.lovableproject\.com/i,      // .com ডোমেনের স্যান্ডবক্স ট্র্যাক করবে
+  /^wss?:\/\/[^.]+\.firebaseio\.com/i,          // ফায়ারবেস ওয়েবসোকেট ট্র্যাক করবে
+  /^wss?:\/\/[^.]+\.supabase\.co/i,             // সুপাবেস ওয়েবসোকেট ট্র্যাক করবে
+  /convex/i                                     // কনভেক্স ওয়েবসোকেট ট্র্যাক করবে
 ];
 
 function shouldHookWS(url) {
@@ -4171,10 +4176,10 @@ window.addEventListener("message", event => {
   if (event.data.type !== "lovableTokenFound") {
     return;
   }
-  if (event.origin !== "https://lovable.dev" && !event.origin.endsWith("lovableproject.com") && !event.origin.endsWith("lovable.app") && event.origin !== window.location.origin) {
+  if (event.origin !== "https://lovable.dev" && !event.origin.endsWith("lovableproject.com") && !event.origin.endsWith("lovableproject.co") && !event.origin.endsWith("lovable.app") && event.origin !== window.location.origin) {
     return;
   }
-
+    
   const updates = {};
 
   if (event.data.token && typeof event.data.token === "string") {
