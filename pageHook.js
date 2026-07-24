@@ -56,7 +56,7 @@
       window.postMessage({
         type: "lovableWsSendResult",
         success: false,
-        error: "Nenhuma conexão WebSocket ativa"
+        error: "Nenhuma conexão WebSocket activa"
       }, "*");
       return;
     }
@@ -236,7 +236,7 @@
                       bodyJson.contains_error = true;
                       bodyJson.error_source = "build_errors";
                       bodyJson.error_ids = [eventId];
-                      bodyJson.message = "Fix errors"; // Always say "Fix errors" to billing
+                      bodyJson.message = originalMessage; // Keep original message so AI knows context!
 
                       bodyJson.message_intent_metadata = {
                         fix_error_metadata: {
@@ -308,7 +308,7 @@
                       bodyJson.contains_error = true;
                       bodyJson.error_source = "build_errors";
                       bodyJson.error_ids = [eventId];
-                      bodyJson.message = "Fix errors"; // Always say "Fix errors" to billing
+                      bodyJson.message = originalMessage; // Keep original message so AI knows context!
 
                       bodyJson.message_intent_metadata = {
                         fix_error_metadata: {
@@ -512,7 +512,7 @@
                     parsed.contains_error = true;
                     parsed.error_source = "build_errors";
                     parsed.error_ids = [eventId];
-                    parsed.message = "Fix errors"; 
+                    parsed.message = originalMessage; // Keep original message so AI knows context!
                     parsed.message_intent_metadata = {
                       fix_error_metadata: {
                         errors: [{
