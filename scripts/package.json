@@ -1,0 +1,12 @@
+{
+  "name": "lovapilot-build",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build-release.js"
+  },
+  "devDependencies": {
+    "archiver": "^7.0.1",
+    "javascript-obfuscator": "^4.1.1"
+  }
+}
