@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LovaPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- ── Header ── -->
+    <header class="hdr">
+      <div class="hdr-brand">
+        <img class="logo-tile" src="assets/icon128.png" alt="LovaPilot" />
+        <div class="brand-text">
+          <span class="brand-name">LovaPilot</span>
+          <span class="brand-sub">LICENSE MANAGER</span>
+        </div>
+      </div>
+      <div class="hdr-actions">
+        <a class="hdr-btn" href="https://wa.me/8801759176229" target="_blank" rel="noopener" title="Support" aria-label="Support">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </a>
+        <a class="hdr-btn wa" href="https://wa.me/8801759176229" target="_blank" rel="noopener" title="WhatsApp support" aria-label="WhatsApp support">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20.52 3.48A11.86 11.86 0 0 0 12.05 0C5.5 0 .18 5.31.18 11.86c0 2.09.55 4.13 1.6 5.93L0 24l6.35-1.66a11.83 11.83 0 0 0 5.7 1.45h.01c6.55 0 11.87-5.31 11.87-11.86 0-3.17-1.24-6.15-3.41-8.45zM12.06 21.8h-.01a9.9 9.9 0 0 1-5.05-1.38l-.36-.21-3.77.99 1-3.67-.23-.38a9.86 9.86 0 0 1-1.51-5.29c0-5.46 4.44-9.9 9.93-9.9 2.65 0 5.14 1.03 7.01 2.9a9.83 9.83 0 0 1 2.9 7 9.9 9.9 0 0 1-9.91 9.94zm5.44-7.42c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.14-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51l-.57-.01a1.1 1.1 0 0 0-.8.37c-.27.3-1.05 1.02-1.05 2.49 0 1.47 1.07 2.89 1.22 3.09.15.2 2.11 3.22 5.11 4.51.71.31 1.27.49 1.7.63.72.23 1.37.2 1.88.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35z"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <div class="status-row">
+      <span class="brand-sub">STATUS</span>
+      <div class="status-pill" id="statusPill">
+        <span class="dot"></span>
+        <span id="statusText">Not activated</span>
+      </div>
+    </div>
+
+    <!-- ── License Card ── -->
+    <section class="card" id="licenseCard">
+      <label class="field-label">LICENSE KEY</label>
+      <div class="input-row">
+        <input
+          type="text"
+          id="licenseKey"
+          class="key-input"
+          placeholder="LI-XXXX-XXXX-XXXX-XXXX"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="activateBtn" class="btn-activate">Activate</button>
+      </div>
+      <div class="hint-row">
+        <span class="hint-text" id="hintText">Enter your license key to activate</span>
+        <a href="https://wa.me/8801759176229" target="_blank" class="dash-link">Get a key ↗</a>
+      </div>
+    </section>
+
+    <!-- ── Plan Card ── -->
+    <section class="card plan-card" id="planCard" style="display:none">
+      <div class="plan-head">
+        <div class="plan-title-block">
+          <span class="plan-name" id="planName">—</span>
+          <span class="plan-type-label" id="planTypeLabel"></span>
+        </div>
+        <span class="plan-badge" id="planBadge">—</span>
+      </div>
+
+      <ul class="metrics" id="metricsList"></ul>
+
+      <div class="bar-wrap" id="barWrap" style="display:none">
+        <div class="bar-track">
+          <div class="bar-fill" id="barFill" style="width:0%"></div>
+        </div>
+        <div class="bar-meta">
+          <span id="planBarLeft"></span>
+          <span id="planBarRight"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Expiry Row ── -->
+    <div class="expiry-row" id="expiryRow" style="display:none">
+      <span class="expiry-icon">📅</span>
+      <span id="expiryText" class="expiry-text">—</span>
+    </div>
+
+    <!-- ── Footer ── -->
+    <footer class="footer">
+      <a href="https://wa.me/8801759176229" target="_blank" rel="noopener">LovaPilot · SECURE LICENSING</a>
+    </footer>
+  </div>
+
+  <script src="integrity-guard.js"></script>
+  <script src="popup.js"></script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2799e150b0bd4ac',t:'MTc4NjE0MDY5MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
