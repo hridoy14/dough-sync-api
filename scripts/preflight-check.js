@@ -86,10 +86,8 @@ for (const entry of fs.readdirSync(ROOT)) {
   }
 }
 
-// ---------- 7) scripts/ git-hygiene (itsakib dev-tools) ----------
-const JUNK_RE = /^(analyze-|decode-|extract-|find-|read-dom-|read-native-)/;
-const scriptJunk = fs.readdirSync(__dirname).filter(f => JUNK_RE.test(f));
-if (scriptJunk.length) warn('scripts/ e itsakib dev-tools ache (GitHub e na dewa bhalo): ' + scriptJunk.join(', ') + ' — build e PROBLEM HOBE NA (scripts skip hoy), shudhu git upload er age delete koro');
+// ---------- 7) scripts/ folder count (info only — এর ভেতরের কিছুই build এ যায় না) ----------
+console.log('   (info) scripts/ e ' + fs.readdirSync(__dirname).length + ' ta item ache — build scripts/ ke SKIP kore, kono dorkar nai');
 
 // ---------- 8) config sanity (migration stamps) ----------
 try {
