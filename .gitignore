@@ -1,4 +1,24 @@
+# ===== LovaPilot — .gitignore =====
+
+# Build outputs (নিজে বানায়, repo তে রাখবে না)
 dist/
-scripts/node_modules/
-node_modules/
+lovapilot-release.zip
 *.zip
+
+# Dependencies (npm install দিয়ে আসে)
+node_modules/
+scripts/node_modules/
+pro8-api/node_modules/
+
+# Integrity manifest (build dist এ fresh বানায়)
+integrity-manifest.json
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+*.tmp
+
+# Arena / dev scratch
+.arena/
