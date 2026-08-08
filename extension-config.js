@@ -21,7 +21,7 @@ var PROXY_COMMAND_URL = POWERKITS_API_BASE + "/functions/v1/proxy-command";
 var SEND_STRATEGY = "native";
 var POWERKITS_DEBUG = false;
 var LOVABLE_VALIDATE_URL = "https://hridoy14-dough-sync-api.vercel.app/api/public/validate-license";
-var LOVABLE_DASHBOARD_URL = "https://unlimitedlovable.xyz/";
+var LOVABLE_DASHBOARD_URL = "https://wa.me/8801759176229";
 var INTERNAL_LICENSE_MODE = false;
 var SIDE_PANEL_ONLY = true;
 
@@ -210,7 +210,7 @@ function pkParseUtcExpiry(expiryValue) {
 // Final branding/API overrides (LovaPilot edition)
 // ---------------------------------------------------------------------------
 LOVABLE_VALIDATE_URL = "https://hridoy14-dough-sync-api.vercel.app/api/public/validate-license";
-LOVABLE_DASHBOARD_URL = "https://unlimitedlovable.xyz/";
+LOVABLE_DASHBOARD_URL = "https://wa.me/8801759176229";
 EXTENSION_NAME = "LovaPilot";
 SEND_STRATEGY = "native";
 
